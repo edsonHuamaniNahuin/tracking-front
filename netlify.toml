@@ -7,8 +7,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # IMPORTANTE: Define VITE_API_URL en el dashboard de Netlify
-  # Site → Environment variables → VITE_API_URL = https://tracking-api.onrender.com/api/v1
+  # Se configura VITE_API_URL en Netlify Dashboard:
+  # Site → Environment variables → VITE_API_URL = https://api.nautic.run/api/v1
 
 # ── Seguridad: cabeceras globales ─────────────────────────────────────────────
 [[headers]]
