@@ -1,0 +1,331 @@
+/* Estilos de Leaflet - DEBE IR PRIMERO */
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Estilos para iconos de zoom fijo */
+.vessel-fixed-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.vessel-fixed-icon:hover {
+  transform: scale(1.08);
+  transition: transform 0.2s ease;
+}
+
+/* Cursor personalizado para mapa sin zoom */
+.leaflet-container.leaflet-touch-drag {
+  cursor: grab;
+}
+
+.leaflet-container.leaflet-touch-drag.leaflet-dragging {
+  cursor: grabbing;
+}
+
+/* Estilos para iconos de tabs personalizados */
+.vessel-tab-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.vessel-tab-icon:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Estilos para iconos personalizados de embarcaciones */
+.vessel-custom-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.vessel-custom-icon .vessel-icon-container:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Estilos personalizados para el mapa */
+.vessel-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+  background: hsl(var(--background));
+}
+
+/* Estilos para los marcadores de embarcaciones */
+.custom-vessel-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.custom-vessel-marker .vessel-marker {
+  transition: all 0.2s ease;
+}
+
+.custom-vessel-marker:hover .vessel-marker {
+  transform: scale(1.1);
+}
+
+/* Popup de embarcación */
+.vessel-popup h3 {
+  margin: 0 0 8px 0;
+  color: hsl(var(--foreground));
+}
+
+.vessel-popup p {
+  margin: 2px 0;
+}
+
+/* Mejoras para el popup de embarcación */
+.leaflet-popup-content .vessel-popup {
+  padding: 4px 0;
+}
+
+.leaflet-popup-content .vessel-popup h3 {
+  color: hsl(var(--foreground));
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.leaflet-popup-content .vessel-popup .space-y-1>*+* {
+  margin-top: 4px;
+}
+
+/* Controles de zoom personalizados */
+.leaflet-control-zoom {
+  display: none;
+  /* Ocultar controles por defecto para usar los personalizados */
+}
+
+/* Ajustes del contenedor del mapa */
+.leaflet-container {
+  font-family: inherit;
+  background: #f8fafc;
+}
+
+/*
+ * Fix: Tailwind preflight aplica max-width:100% a img,
+ * lo que encoge los tiles de Leaflet y desplaza marcadores.
+ */
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Ocultar zoom nativo si se usan controles custom */
+.leaflet-control-zoom {
+  display: none;
+}
+
+/* Estilos para iconos personalizados de embarcaciones */
+.vessel-custom-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.vessel-custom-icon .vessel-icon-container:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Estilos para marcadores personalizados */
+.vessel-marker-simple {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.vessel-marker-simple:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.leaflet-control-layers {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+
+
+@layer base {
+  :root {
+    /* —————— PALETA CLARA —————— */
+    --background: 0 0% 100%;
+    /* fondo de la app */
+    --foreground: 240 10% 3.9%;
+    /* texto principal */
+    --card: 0 0% 100%;
+    /* fondo de tarjetas */
+    --card-foreground: 240 10% 3.9%;
+    /* texto en tarjetas */
+    --popover: 0 0% 100%;
+    /* fondo de popovers */
+    --popover-foreground: 240 10% 3.9%;
+    /* texto en popovers */
+    --primary: 142.1 76.2% 36.3%;
+    /* color primario */
+    --primary-foreground: 355.7 100% 97.3%;
+    /* texto primario (claro) */
+    --secondary: 240 4.8% 95.9%;
+    /* color secundario */
+    --secondary-foreground: 240 5.9% 10%;
+    /* texto secundario */
+    --muted: 240 4.8% 95.9%;
+    /* color “apagado” */
+    --muted-foreground: 240 3.8% 46.1%;
+    /* texto “apagado” */
+    --accent: 240 4.8% 95.9%;
+    /* color de acento */
+    --accent-foreground: 240 5.9% 10%;
+    /* texto de acento */
+    --destructive: 0 84.2% 60.2%;
+    /* color destructivo (p.ej. eliminar) */
+    --destructive-foreground: 0 0% 98%;
+    /* texto destructivo */
+    --border: 240 5.9% 90%;
+    /* color de bordes */
+    --input: 240 5.9% 90%;
+    /* fondo de inputs */
+    --ring: 142.1 76.2% 36.3%;
+    /* color de foco (ring) */
+    --radius: 0.75rem;
+    /* radio de bordes */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* —————— SIDEBAR —————— */
+    --sidebar-background: 0 0% 98%;
+    /* fondo de la barra lateral */
+    --sidebar-foreground: 240 5.3% 26.1%;
+    /* texto en la barra lateral */
+    --sidebar-primary: 240 5.9% 10%;
+    /* color primario de items */
+    --sidebar-primary-foreground: 0 0% 98%;
+    /* texto de items primarios */
+    --sidebar-accent: 240 4.8% 95.9%;
+    /* acento en sidebar */
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    /* texto en acento */
+    --sidebar-border: 220 13% 91%;
+    /* borde de sidebar */
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* foco en sidebar */
+  }
+
+  .dark {
+    /* —————— PALETA OSCURA —————— */
+    --background: 20 14.3% 4.1%;
+    /* fondo oscuro */
+    --foreground: 0 0% 95%;
+    /* texto claro */
+    --card: 24 9.8% 10%;
+    /* tarjeta fondo */
+    --card-foreground: 0 0% 95%;
+    /* tarjeta texto */
+    --popover: 0 0% 9%;
+    /* popover fondo */
+    --popover-foreground: 0 0% 95%;
+    /* popover texto */
+    --primary: 142.1 70.6% 45.3%;
+    /* primario oscuro */
+    --primary-foreground: 144.9 80.4% 10%;
+    /* texto primario */
+    --secondary: 240 3.7% 15.9%;
+    /* secundario oscuro */
+    --secondary-foreground: 0 0% 98%;
+    /* texto secundario */
+    --muted: 0 0% 15%;
+    /* apagado oscuro */
+    --muted-foreground: 240 5% 64.9%;
+    /* texto apagado */
+    --accent: 12 6.5% 15.1%;
+    /* acento oscuro */
+    --accent-foreground: 0 0% 98%;
+    /* texto acento */
+    --destructive: 0 62.8% 30.6%;
+    /* destructivo oscuro */
+    --destructive-foreground: 0 85.7% 97.3%;
+    /* texto destructivo */
+    --border: 240 3.7% 15.9%;
+    /* borde oscuro */
+    --input: 240 3.7% 15.9%;
+    /* input oscuro */
+    --ring: 142.4 71.8% 29.2%;
+    /* focus ring oscuro */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* —————— SIDEBAR OSCURO —————— */
+    --sidebar-background: 240 5.9% 10%;
+    /* fondo sidebar oscuro */
+    --sidebar-foreground: 240 4.8% 95.9%;
+    /* texto sidebar */
+    --sidebar-primary: 224.3 76.3% 48%;
+    /* primario sidebar */
+    --sidebar-primary-foreground: 0 0% 100%;
+    /* texto primario */
+    --sidebar-accent: 240 3.7% 15.9%;
+    /* acento sidebar */
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    /* texto acento */
+    --sidebar-border: 240 3.7% 15.9%;
+    /* borde sidebar */
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* foco sidebar */
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
