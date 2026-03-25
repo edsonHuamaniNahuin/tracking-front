@@ -55,6 +55,12 @@ export interface Tracking {
   updated_at: string;
   deleted_at: string | null;
   vessel: TrackingVessel;
+  /** Alias opcional — algunos endpoints devuelven reported_at */
+  reportedAt?: string;
+  /** Velocidad calculada o reportada (nudos) */
+  speed?: number;
+  /** Rumbo en grados */
+  course?: number;
 }
 
 export interface CreateTrackingRequest {

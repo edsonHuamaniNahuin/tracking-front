@@ -1,18 +1,11 @@
 // src/routes/ProfileRoute.tsx
 import React, { type FC } from 'react'
 import { Outlet } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import AppLayout from '@/layouts/AppLayout'
+import useAuth from '@/hooks/useAuth'
 
 const ProfileRoute: FC = () => {
-  const { token } = useAuth()
-  return token ? (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
-  ) : (
-    <Outlet />
-  )
+  const { user } = useAuth()
+  return <Outlet />
 }
 
 export default ProfileRoute

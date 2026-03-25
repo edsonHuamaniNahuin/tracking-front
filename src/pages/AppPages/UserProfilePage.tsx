@@ -178,7 +178,7 @@ export default function UserProfilePage() {
         location: formProfile.location,
       };
       const response = await profileService.updateProfile(payload);
-      const userResponse: UpdateProfileResponse = response.data.user;
+      const userResponse = response.data.user as UpdateProfileResponse;
 
       setUser((prev) => {
         if (!prev) return prev;

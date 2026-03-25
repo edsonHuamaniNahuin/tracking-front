@@ -237,8 +237,8 @@ export default function VesselsPage() {
                     currentPage={apiData.meta.current_page}
                     totalPages={apiData.meta.last_page}
                     totalItems={apiData.meta.total}
-                    from={apiData.meta.from}
-                    to={apiData.meta.to}
+                    from={apiData.meta.from ?? 0}
+                    to={apiData.meta.to ?? 0}
                     onPageChange={handlePageChange}
                     isLoading={isLoading}              // ← nuevo prop
                 />

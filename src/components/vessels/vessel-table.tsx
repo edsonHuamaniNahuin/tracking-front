@@ -7,15 +7,7 @@ import { DEFAULT_LOADING_ROWS } from "@/utils/statics"
 import { Eye, Edit, Trash2 } from "lucide-react"
 import { formatDate as formatDateUtil } from "@/utils/date"
 
-interface Vessel {
-    id: number
-    user_id: number
-    name: string
-    imo: string
-    created_at: string
-    updated_at: string
-    deleted_at: string | null
-}
+import type { Vessel } from "@/types/models/vessel"
 
 interface VesselTableProps {
     vessels: Vessel[]

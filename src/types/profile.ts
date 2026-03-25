@@ -5,7 +5,7 @@ import type { ApiResponse } from './api';
  * Respuesta genérica estándar de nuestro backend:
  * { status, message, data: User }
  */
-export type GenericResponse = ApiResponse<User>
+export type GenericResponse = ApiResponse<{ user: User }>
 
 /**
  * Payload para actualizar datos personales (PUT /user).

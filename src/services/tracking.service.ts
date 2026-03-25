@@ -83,8 +83,8 @@ export const trackingService = {
         if (i === 0) return { ...pt, speed: 0 }
         const prev = arr[i - 1]
         const dist = haversine(
-          [prev.latitude, prev.longitude],
-          [pt.latitude, pt.longitude]
+          [Number(prev.latitude), Number(prev.longitude)],
+          [Number(pt.latitude), Number(pt.longitude)]
         )
         const dt =
           (new Date(pt.tracked_at).getTime() -
@@ -108,8 +108,8 @@ export const trackingService = {
       const dist =
         i > 0
           ? haversine(
-            [prev.latitude, prev.longitude],
-            [pt.latitude, pt.longitude]
+            [Number(prev.latitude), Number(prev.longitude)],
+            [Number(pt.latitude), Number(pt.longitude)]
           )
           : 0
       const entry = dailyMap.get(dateKey) || { distance: 0, count: 0 }

@@ -67,11 +67,15 @@ export function TrackingStats({ trackings, vessel, isLoading = false }: Tracking
             // Calcular distancia entre puntos
             if (current.latitude && current.longitude && previous.latitude && previous.longitude) {
                 const R = 6371 // Radio de la Tierra en km
-                const dLat = (current.latitude - previous.latitude) * Math.PI / 180
-                const dLon = (current.longitude - previous.longitude) * Math.PI / 180
+                const curLat = Number(current.latitude)
+                const curLon = Number(current.longitude)
+                const prevLat = Number(previous.latitude)
+                const prevLon = Number(previous.longitude)
+                const dLat = (curLat - prevLat) * Math.PI / 180
+                const dLon = (curLon - prevLon) * Math.PI / 180
                 const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(previous.latitude * Math.PI / 180) *
-                    Math.cos(current.latitude * Math.PI / 180) *
+                    Math.cos(prevLat * Math.PI / 180) *
+                    Math.cos(curLat * Math.PI / 180) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2)
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
                 const distance = R * c

@@ -211,8 +211,9 @@ export function LeafletMap({ data, height = 400, isLoading = false }: LeafletMap
         }
     }
 
-    const fitBounds = () => {
+    const fitBounds = async () => {
         if (mapInstanceRef.current && markersRef.current.length > 0) {
+            const L = (await import("leaflet")).default
             const group = L.featureGroup(markersRef.current)
             mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1))
         }
