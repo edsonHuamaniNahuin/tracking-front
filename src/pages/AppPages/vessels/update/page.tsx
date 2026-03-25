@@ -147,7 +147,7 @@ export default function VesselUpdatePage() {
     }
 
     const buildEspConfig = () => {
-        const apiBase = (import.meta.env.VITE_API_NETWORK || import.meta.env.VITE_API_LOCAL || '').replace(/\/v1$/, '')
+        const apiBase = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_NETWORK || import.meta.env.VITE_API_LOCAL || '').replace(/\/v1$/, '')
         return {
             token: deviceToken || '',
             api_url: `${apiBase}/v1/device/ping`,
@@ -730,7 +730,7 @@ Content-Type: application/json
                                 </div>
                                 <div className="flex justify-between items-center bg-muted/50 rounded px-3 py-1.5">
                                     <span className="text-muted-foreground text-xs">API URL</span>
-                                    <span className="font-mono text-xs truncate ml-2">{((import.meta.env.VITE_API_NETWORK || import.meta.env.VITE_API_LOCAL || '') as string).replace(/\/v1$/, '') + '/v1/device/ping'}</span>
+                                    <span className="font-mono text-xs truncate ml-2">{((import.meta.env.VITE_API_URL || import.meta.env.VITE_API_NETWORK || import.meta.env.VITE_API_LOCAL || '') as string).replace(/\/v1$/, '') + '/v1/device/ping'}</span>
                                 </div>
                                 <div className="flex justify-between items-center bg-muted/50 rounded px-3 py-1.5">
                                     <span className="text-muted-foreground text-xs">Intervalo</span>
