@@ -169,10 +169,12 @@ export function TrackingMap({
     const mapRef         = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<import('leaflet').Map | null>(null)
     // Map<trackingId, Marker> — permite actualizar iconos sin recrear marcadores
-    const markersMapRef  = useRef<Map<number, import('leaflet').Marker>>(new Map())
-    const trajectoryRef  = useRef<import('leaflet').Polyline | null>(null)
+    const markersMapRef    = useRef<Map<number, import('leaflet').Marker>>(new Map())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clusterGroupRef  = useRef<any>(null)
+    const trajectoryRef    = useRef<import('leaflet').Polyline | null>(null)
     const resizeObserverRef = useRef<ResizeObserver | null>(null)
-    const leafletRef     = useRef<LeafletType | null>(null)
+    const leafletRef       = useRef<LeafletType | null>(null)
     // Refs auxiliares para el efecto de selección
     const lastTrackingIdRef   = useRef<number | null>(null)
     const sortedTrackingsRef  = useRef<Tracking[]>([])
@@ -191,6 +193,11 @@ export function TrackingMap({
 
             const L = (await import("leaflet")).default
             if (cancelled) return
+
+            // Importar markercluster (CSS + plugin sobre L)
+            await import('leaflet.markercluster/dist/MarkerCluster.css')
+            await import('leaflet.markercluster/dist/MarkerCluster.Default.css')
+            await import('leaflet.markercluster')
 
             leafletRef.current = L
 
@@ -234,6 +241,39 @@ export function TrackingMap({
             }).addTo(map)
 
             mapInstanceRef.current = map
+
+            // Crear cluster group (persiste toda la vida del mapa)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const LX = L as unknown as any
+            const cluster = new LX.MarkerClusterGroup({
+                maxClusterRadius: 40,
+                disableClusteringAtZoom: 16,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                iconCreateFunction: (c: any) => {
+                    const count = c.getChildCount()
+                    const size  = count < 10 ? 28 : count < 100 ? 34 : 40
+                    return L.divIcon({
+                        html: `<div style="
+                            width:${size}px;height:${size}px;
+                            background:#3b82f6;
+                            border:2.5px solid white;
+                            border-radius:50%;
+                            box-shadow:0 2px 8px rgba(0,0,0,.35);
+                            display:flex;align-items:center;justify-content:center;
+                            font-family:system-ui;font-size:${size < 34 ? 11 : 12}px;
+                            font-weight:700;color:white;
+                        ">${count}</div>`,
+                        className: '',
+                        iconSize:   [size, size],
+                        iconAnchor: [size / 2, size / 2],
+                    })
+                },
+            })
+            cluster.addTo(map)
+            clusterGroupRef.current = cluster
+
             setIsReady(true)
             setMapStatus("Mapa listo — selecciona una embarcación")
 
@@ -261,6 +301,7 @@ export function TrackingMap({
                 mapInstanceRef.current.remove()
                 mapInstanceRef.current = null
             }
+            clusterGroupRef.current = null
             leafletRef.current = null
             setIsReady(false)
         }
@@ -353,6 +394,7 @@ export function TrackingMap({
         const map = mapInstanceRef.current
 
         // Limpiar capa anterior
+        if (clusterGroupRef.current) clusterGroupRef.current.clearLayers()
         markersMapRef.current.forEach(m => m.remove())
         markersMapRef.current.clear()
         trajectoryRef.current?.remove()
@@ -394,9 +436,17 @@ export function TrackingMap({
             )
 
             marker.on('click', () => onTrackingClick(tracking))
-            marker.addTo(map)
+            // Registrar en el mapa de marcadores (para Effect 2 — setIcon/panTo)
             markersMapRef.current.set(tracking.id, marker)
         })
+
+        // Añadir todos los marcadores de tracking al cluster de una sola vez
+        if (clusterGroupRef.current) {
+            const trackingMarkersList = sorted
+                .map(t => markersMapRef.current.get(t.id))
+                .filter((m): m is import('leaflet').Marker => m !== undefined)
+            clusterGroupRef.current.addLayers(trackingMarkersList)
+        }
 
         // Trayectoria
         if (showTrajectory && sorted.length > 1) {
@@ -472,13 +522,19 @@ export function TrackingMap({
             const marker = markersMapRef.current.get(selectedTracking.id)
             if (marker) {
                 marker.setIcon(createTrackingIcon(true, false))
-                marker.openPopup()
 
                 const lat = Number(selectedTracking.latitude)
                 const lng = Number(selectedTracking.longitude)
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    // panTo preserva el nivel de zoom actual del usuario
-                    map.panTo([lat, lng], { animate: true, duration: 0.4 })
+                    // Si el marcador está dentro de un cluster, hacer zoom hasta revelarlo
+                    if (clusterGroupRef.current) {
+                        clusterGroupRef.current.zoomToShowLayer(marker, () => {
+                            marker.openPopup()
+                        })
+                    } else {
+                        map.panTo([lat, lng], { animate: true, duration: 0.4 })
+                        marker.openPopup()
+                    }
                 }
             }
         }

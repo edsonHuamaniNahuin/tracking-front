@@ -22,6 +22,19 @@ export const trackingService = {
     from: string,
     to: string
   ): Promise<Tracking[]> => {
+    // Cache para rangos históricos (el pasado es inmutable)
+    // Solo cacheamos si "to" es anterior a la hora actual (no rango abierto)
+    const toDate   = new Date(to)
+    const isHistorical = toDate < new Date()
+    const cacheKey = `tk_${vesselId}_${from}_${to}`
+
+    if (isHistorical) {
+      const cached = sessionStorage.getItem(cacheKey)
+      if (cached) {
+        try { return JSON.parse(cached) as Tracking[] } catch { /* parse fail → refetch */ }
+      }
+    }
+
     const response = await api.get<PaginatedTrackingResponse>(`/trackings`, {
       params: {
         vessel_id: vesselId,
@@ -31,7 +44,13 @@ export const trackingService = {
         page: 1,
       },
     })
-    return response.data.data
+    const data = response.data.data
+
+    if (isHistorical) {
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(data)) } catch { /* quota exceeded — skip */ }
+    }
+
+    return data
   },
 
   /**

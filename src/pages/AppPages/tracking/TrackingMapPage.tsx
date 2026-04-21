@@ -42,6 +42,8 @@ export default function TrackingMapPage() {
     const [selectedTracking, setSelectedTracking] = useState<Tracking | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [isCheckingDevice, setIsCheckingDevice] = useState(false)
+    const [deviceOfflineMsg, setDeviceOfflineMsg] = useState<string | null>(null)
 
     // Estados de filtros
     const [dateFrom, setDateFrom] = useState<Date>(() => {
@@ -137,6 +139,29 @@ export default function TrackingMapPage() {
         onTick: liveRefresh,
         intervalMs: 15_000,
     })
+
+    // ── Activar Live con validación de dispositivo online ────────────────────
+    const handleLiveToggle = useCallback(async () => {
+        if (isLive) { toggleLive(); return }
+        if (!selectedVessel) return
+        setDeviceOfflineMsg(null)
+        setIsCheckingDevice(true)
+        try {
+            const status = await vesselService.getDeviceStatus(selectedVessel)
+            if (status.is_online) {
+                toggleLive()
+            } else {
+                const lastSeen = status.last_seen_at
+                    ? `Última señal: ${new Date(status.last_seen_at).toLocaleString('es-PE')}`
+                    : 'Sin señal reciente'
+                setDeviceOfflineMsg(`Dispositivo desconectado. ${lastSeen}.`)
+            }
+        } catch {
+            setDeviceOfflineMsg('No se pudo verificar el estado del dispositivo.')
+        } finally {
+            setIsCheckingDevice(false)
+        }
+    }, [isLive, selectedVessel, toggleLive])
 
     // ── Contenido del panel lateral (reutilizado en normal y fullscreen) ──
     const sidePanel = trackings.length > 0 ? (
@@ -291,13 +316,15 @@ export default function TrackingMapPage() {
                     <Button
                         variant={isLive ? "destructive" : "outline"}
                         size="sm"
-                        onClick={toggleLive}
-                        disabled={!selectedVessel}
+                        onClick={handleLiveToggle}
+                        disabled={!selectedVessel || isCheckingDevice}
                         title={isLive ? 'Detener modo live' : 'Activar modo live (refresco automático cada 15 s)'}
                     >
-                        {isLive
-                            ? <><WifiOff className="h-4 w-4 mr-1.5" />Detener Live</>
-                            : <><Radio className="h-4 w-4 mr-1.5" />Live</>
+                        {isCheckingDevice
+                            ? <><RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />Verificando...</>
+                            : isLive
+                                ? <><WifiOff className="h-4 w-4 mr-1.5" />Detener Live</>
+                                : <><Radio className="h-4 w-4 mr-1.5" />Live</>
                         }
                     </Button>
                     <Button variant="outline" size="sm" onClick={loadTrackings} disabled={!selectedVessel || isLoading || isLive}>
@@ -306,6 +333,20 @@ export default function TrackingMapPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* Aviso de dispositivo offline */}
+            {deviceOfflineMsg && (
+                <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{deviceOfflineMsg}</span>
+                    <button
+                        className="ml-auto text-amber-600 hover:text-amber-800 text-xs underline"
+                        onClick={() => setDeviceOfflineMsg(null)}
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            )}
 
             {/* Filtros — una sola fila */}
             <Card>
