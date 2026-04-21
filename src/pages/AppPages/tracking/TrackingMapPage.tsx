@@ -106,7 +106,18 @@ export default function TrackingMapPage() {
             const from = format(dateFrom, 'yyyy-MM-dd HH:mm:ss')
             const to = format(dateTo, 'yyyy-MM-dd HH:mm:59')
             const data = await trackingService.getTrackings(selectedVessel, from, to)
-            setTrackings(Array.isArray(data) ? data : [])
+
+            // Para días históricos el servicio pide el día completo al backend y
+            // lo devuelve completo desde cache. Filtramos localmente por la
+            // selección de horas del usuario para que el UI sea preciso.
+            const filtered = Array.isArray(data)
+                ? data.filter(t => {
+                    const d = new Date(t.tracked_at)
+                    return d >= dateFrom && d <= dateTo
+                })
+                : []
+
+            setTrackings(filtered)
             // Actualizar URL sin disparar re-render del efecto de carga de vessels
             setSearchParams({ vessel: selectedVessel.toString() }, { replace: true })
         } catch {
@@ -204,6 +215,7 @@ export default function TrackingMapPage() {
                         onTrackingClick={setSelectedTracking}
                         height={undefined}
                         isLoading={isLoading}
+                        isLive={isLive}
                     />
 
                     {/* Indicador LIVE flotante */}
@@ -462,6 +474,7 @@ export default function TrackingMapPage() {
                                 onTrackingClick={setSelectedTracking}
                                 height={560}
                                 isLoading={isLoading}
+                                isLive={isLive}
                             />
                         </CardContent>
                     </Card>

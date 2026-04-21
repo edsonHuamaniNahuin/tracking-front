@@ -14,19 +14,36 @@ export interface ProcessedTrackingData {
 
 export const trackingService = {
   /**
-   * Obtiene todos los trackings de una embarcación
-   * entre dos fechas (inclusive).
+   * Obtiene todos los trackings de una embarcación entre dos fechas (inclusive).
+   *
+   * Política de granularidad (espeja la del backend):
+   * - HOY       → se envían fecha+hora exactas; el backend filtra por hora.
+   * - AYER ←   → se envía solo la fecha (sin hora); el backend devuelve el
+   *               día completo (startOfDay→endOfDay). El filtro por hora queda
+   *               en manos del componente que consume esta función.
+   *
+   * El cache key usa fechas normalizadas (sin hora para días históricos), de modo
+   * que distintas consultas sobre el mismo día pasado siempre reutilizan la misma
+   * entrada de sessionStorage.
    */
   getTrackings: async (
     vesselId: number,
     from: string,
     to: string
   ): Promise<Tracking[]> => {
-    // Cache para rangos históricos (el pasado es inmutable)
-    // Solo cacheamos si "to" es anterior a la hora actual (no rango abierto)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    const fromDate = new Date(from)
     const toDate   = new Date(to)
-    const isHistorical = toDate < new Date()
-    const cacheKey = `tk_${vesselId}_${from}_${to}`
+
+    // Normalizar: días anteriores a hoy → solo fecha (backend los tratará como día completo)
+    const apiFrom = fromDate < todayStart ? from.slice(0, 10) : from
+    const apiTo   = toDate   < todayStart ? to.slice(0, 10)   : to
+
+    // Cache solo para rangos completamente en el pasado (resultado inmutable)
+    const isHistorical = toDate < todayStart
+    const cacheKey = `tk_${vesselId}_${apiFrom}_${apiTo}`
 
     if (isHistorical) {
       const cached = sessionStorage.getItem(cacheKey)
@@ -35,22 +52,32 @@ export const trackingService = {
       }
     }
 
-    const response = await api.get<PaginatedTrackingResponse>(`/trackings`, {
-      params: {
-        vessel_id: vesselId,
-        date_from: from,
-        date_to: to,
-        per_page: 1000,
-        page: 1,
-      },
-    })
-    const data = response.data.data
+    // Loop secuencial: espera cada página antes de pedir la siguiente.
+    const PER_PAGE = 5000
+    let page     = 1
+    let lastPage = 1
+    const allData: Tracking[] = []
+
+    do {
+      const response = await api.get<PaginatedTrackingResponse>(`/trackings`, {
+        params: {
+          vessel_id: vesselId,
+          date_from: apiFrom,
+          date_to:   apiTo,
+          per_page: PER_PAGE,
+          page,
+        },
+      })
+      allData.push(...response.data.data)
+      lastPage = response.data.meta.last_page
+      page++
+    } while (page <= lastPage)
 
     if (isHistorical) {
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(data)) } catch { /* quota exceeded — skip */ }
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(allData)) } catch { /* quota exceeded — skip */ }
     }
 
-    return data
+    return allData
   },
 
   /**
