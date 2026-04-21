@@ -170,15 +170,19 @@ export function TrackingMap({
     const [isReady, setIsReady] = useState(false)
     const mapRef         = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<import('leaflet').Map | null>(null)
-    // Map<trackingId, Marker> — permite actualizar iconos sin recrear marcadores
+    // Map<trackingId, Marker> — solo los marcadores actualmente en pantalla
     const markersMapRef    = useRef<Map<number, import('leaflet').Marker>>(new Map())
-    // Map<trackingId, seqNum> — para restaurar iconos numerados en Effect 2
+    // Map<trackingId, seqNum> — número local (1..N visibles) de cada marcador
     const seqNumMapRef     = useRef<Map<number, number>>(new Map())
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clusterGroupRef  = useRef<any>(null)
+    // LayerGroup para markers de tracking (sin cluster — la decimación lo reemplaza)
+    const trackingLayerRef = useRef<import('leaflet').LayerGroup | null>(null)
     const trajectoryRef    = useRef<import('leaflet').Polyline | null>(null)
     const resizeObserverRef = useRef<ResizeObserver | null>(null)
     const leafletRef       = useRef<LeafletType | null>(null)
+    // Timer del debounce de renderizado
+    const renderTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
+    // Ref estable al renderVisibleMarkers actual (para usarlo desde el event listener del mapa)
+    const renderFnRef      = useRef<() => void>(() => { /* noop inicial */ })
     // Refs auxiliares para el efecto de selección
     const lastTrackingIdRef   = useRef<number | null>(null)
     const sortedTrackingsRef  = useRef<Tracking[]>([])
@@ -198,10 +202,9 @@ export function TrackingMap({
             const L = (await import("leaflet")).default
             if (cancelled) return
 
-            // Importar markercluster (CSS + plugin sobre L)
+            // Importar markercluster solo por CSS (ya no lo usamos para markers de tracking)
             await import('leaflet.markercluster/dist/MarkerCluster.css')
             await import('leaflet.markercluster/dist/MarkerCluster.Default.css')
-            await import('leaflet.markercluster')
 
             leafletRef.current = L
 
@@ -246,37 +249,16 @@ export function TrackingMap({
 
             mapInstanceRef.current = map
 
-            // Crear cluster group (persiste toda la vida del mapa)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const LX = L as unknown as any
-            const cluster = new LX.MarkerClusterGroup({
-                maxClusterRadius: 40,
-                disableClusteringAtZoom: 16,
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                iconCreateFunction: (c: any) => {
-                    const count = c.getChildCount()
-                    const size  = count < 10 ? 28 : count < 100 ? 34 : 40
-                    return L.divIcon({
-                        html: `<div style="
-                            width:${size}px;height:${size}px;
-                            background:#3b82f6;
-                            border:2.5px solid white;
-                            border-radius:50%;
-                            box-shadow:0 2px 8px rgba(0,0,0,.35);
-                            display:flex;align-items:center;justify-content:center;
-                            font-family:system-ui;font-size:${size < 34 ? 11 : 12}px;
-                            font-weight:700;color:white;
-                        ">${count}</div>`,
-                        className: '',
-                        iconSize:   [size, size],
-                        iconAnchor: [size / 2, size / 2],
-                    })
-                },
-            })
-            cluster.addTo(map)
-            clusterGroupRef.current = cluster
+            // LayerGroup para todos los marcadores de tracking (la decimación controla
+            // cuántos hay en pantalla — no necesitamos cluster)
+            trackingLayerRef.current = L.layerGroup().addTo(map)
+
+            // Listener de movimiento/zoom → re-renderiza marcadores con debounce
+            const debouncedRender = () => {
+                if (renderTimerRef.current) clearTimeout(renderTimerRef.current)
+                renderTimerRef.current = setTimeout(() => renderFnRef.current(), 120)
+            }
+            map.on('zoomend moveend', debouncedRender)
 
             setIsReady(true)
             setMapStatus("Mapa listo — selecciona una embarcación")
@@ -299,13 +281,14 @@ export function TrackingMap({
 
         return () => {
             cancelled = true
+            if (renderTimerRef.current) clearTimeout(renderTimerRef.current)
             resizeObserverRef.current?.disconnect()
             resizeObserverRef.current = null
             if (mapInstanceRef.current) {
                 mapInstanceRef.current.remove()
                 mapInstanceRef.current = null
             }
-            clusterGroupRef.current = null
+            trackingLayerRef.current = null
             leafletRef.current = null
             setIsReady(false)
         }
@@ -398,18 +381,112 @@ export function TrackingMap({
         })
     }, [])
 
+    // ── Decimación por zoom ───────────────────────────────────────────────────
+    // Retorna cada cuántos puntos del dataset se muestra uno en pantalla.
+    // A más zoom → más resolución; a menos zoom → menos puntos (más rápido).
+    const getDecimationStep = (zoom: number): number => {
+        if (zoom >= 17) return 1
+        if (zoom >= 15) return 2
+        if (zoom >= 13) return 5
+        if (zoom >= 11) return 15
+        if (zoom >= 9)  return 40
+        if (zoom >= 7)  return 100
+        return 300
+    }
+    const MAX_VISIBLE = 700   // cap duro: nunca más de 700 markers en DOM
+
+    // ── Render dinámico por viewport ─────────────────────────────────────────
+    // Se llama en cada zoomend/moveend (con debounce) y cuando cambian los datos.
+    // Limpia los marcadores anteriores y crea SOLO los puntos visibles+decimados,
+    // numerados 1..N — el usuario ve dónde empieza y dónde termina en su zoom.
+    const renderVisibleMarkers = useCallback(() => {
+        const L     = leafletRef.current
+        const map   = mapInstanceRef.current
+        const layer = trackingLayerRef.current
+        if (!L || !map || !layer) return
+
+        const sorted = sortedTrackingsRef.current
+        if (sorted.length === 0) return
+
+        const zoom   = map.getZoom()
+        const bounds = map.getBounds().pad(0.2)  // padding 20% alrededor del viewport
+        const step   = getDecimationStep(zoom)
+
+        // 1. Decimar el dataset global según el zoom actual
+        const decimated: Tracking[] = []
+        for (let i = 0; i < sorted.length; i += step) decimated.push(sorted[i])
+        // Siempre incluir el último punto (posición más reciente)
+        const globalLast = sorted[sorted.length - 1]
+        if (decimated[decimated.length - 1]?.id !== globalLast.id) decimated.push(globalLast)
+
+        // 2. Filtrar a los que están dentro del viewport actual
+        const visible = decimated.filter(t => {
+            const lat = Number(t.latitude)
+            const lng = Number(t.longitude)
+            return !isNaN(lat) && !isNaN(lng) && bounds.contains(L.latLng(lat, lng))
+        })
+
+        // 3. Limitar al cap duro
+        const toRender = visible.slice(0, MAX_VISIBLE)
+
+        // 4. Limpiar capa y refs
+        layer.clearLayers()
+        markersMapRef.current.clear()
+        seqNumMapRef.current.clear()
+
+        const lastId = lastTrackingIdRef.current
+
+        // 5. Crear marcadores con números 1..N (visibles en pantalla)
+        toRender.forEach((tracking, idx) => {
+            const lat    = Number(tracking.latitude)
+            const lng    = Number(tracking.longitude)
+            const seqNum = idx + 1
+            const isLast     = tracking.id === lastId
+            const isSelected = selectedTrackingRef.current?.id === tracking.id
+
+            const utm     = latLonToUtm(lat, lng)
+            const quadKey = latLonToQuadKey(lat, lng, 15)
+
+            const marker = L.marker([lat, lng], {
+                icon: createTrackingIcon(isSelected, isLast, seqNum),
+            })
+
+            marker.bindPopup(
+                buildPopupHtml(seqNum, toRender.length, tracking, lat, lng, utm, quadKey, isLast),
+                { maxWidth: 260, className: 'tracking-popup' }
+            )
+
+            marker.on('click', () => onTrackingClick(tracking))
+            markersMapRef.current.set(tracking.id, marker)
+            seqNumMapRef.current.set(tracking.id, seqNum)
+            layer.addLayer(marker)
+        })
+
+        const total = sorted.length
+        const shown = toRender.length
+        setMapStatus(
+            shown === total
+                ? `${total} punto${total !== 1 ? 's' : ''}`
+                : `${shown} de ${total} puntos (zoom para ver más)`
+        )
+    }, [createTrackingIcon, onTrackingClick])
+
+    // Mantener renderFnRef siempre apuntando a la versión más reciente del callback
+    // (el event listener del mapa lo llama sin capturar deps del closure)
+    useEffect(() => { renderFnRef.current = renderVisibleMarkers }, [renderVisibleMarkers])
+
     // ── Effect 1: redibuja TODO cuando cambian los datos ─────────────────────
-    // fitBounds sólo se llama aquí. selectedTracking NO es dep → el zoom no
-    // se resetea cuando el usuario selecciona un punto desde la timeline.
+    // Solo gestiona: dataset ordenado, trayectoria, otras embarcaciones, fitBounds.
+    // Los MARCADORES los genera renderVisibleMarkers (disparado por zoomend/moveend
+    // tras fitBounds, o explícitamente al final del effect).
     useEffect(() => {
         if (!isReady || !mapInstanceRef.current || !leafletRef.current) return
 
         const L   = leafletRef.current
         const map = mapInstanceRef.current
 
-        // Limpiar capa anterior
-        if (clusterGroupRef.current) clusterGroupRef.current.clearLayers()
-        markersMapRef.current.forEach(m => m.remove())
+        // Limpiar capa de markers y trayectoria anterior
+        if (trackingLayerRef.current) trackingLayerRef.current.clearLayers()
         markersMapRef.current.clear()
         seqNumMapRef.current.clear()
         trajectoryRef.current?.remove()
@@ -426,52 +503,9 @@ export function TrackingMap({
             (a, b) => new Date(a.tracked_at).getTime() - new Date(b.tracked_at).getTime()
         )
         sortedTrackingsRef.current = sorted
-        const lastId = sorted[sorted.length - 1].id
-        lastTrackingIdRef.current = lastId
+        lastTrackingIdRef.current  = sorted[sorted.length - 1].id
 
-        // Marcadores
-        sorted.forEach((tracking, index) => {
-            const lat = Number(tracking.latitude)
-            const lng = Number(tracking.longitude)
-            if (isNaN(lat) || isNaN(lng)) return
-
-            const seqNum   = index + 1
-            const isLast   = tracking.id === lastId
-            const isSelected = selectedTrackingRef.current?.id === tracking.id
-
-            const utm     = latLonToUtm(lat, lng)
-            const quadKey = latLonToQuadKey(lat, lng, 15)
-
-            const marker = L.marker([lat, lng], {
-                icon: createTrackingIcon(isSelected, isLast, seqNum),
-            })
-
-            marker.bindPopup(
-                buildPopupHtml(seqNum, sorted.length, tracking, lat, lng, utm, quadKey, isLast),
-                { maxWidth: 260, className: 'tracking-popup' }
-            )
-
-            marker.on('click', () => onTrackingClick(tracking))
-            // Registrar en los mapas de refs (para Effect 2 — setIcon/panTo)
-            markersMapRef.current.set(tracking.id, marker)
-            seqNumMapRef.current.set(tracking.id, seqNum)
-        })
-
-        if (isLive) {
-            // Modo Live: solo el último marcador en el mapa
-            const lastMarker = markersMapRef.current.get(lastId)
-            if (lastMarker) lastMarker.addTo(map)
-        } else {
-            // Modo histórico: todos los marcadores en el cluster
-            if (clusterGroupRef.current) {
-                const trackingMarkersList = sorted
-                    .map(t => markersMapRef.current.get(t.id))
-                    .filter((m): m is import('leaflet').Marker => m !== undefined)
-                clusterGroupRef.current.addLayers(trackingMarkersList)
-            }
-        }
-
-        // Trayectoria
+        // Trayectoria (polilínea ligera — no afecta el rendimiento)
         if (showTrajectory && sorted.length > 1) {
             const coords = sorted
                 .map(t => [Number(t.latitude), Number(t.longitude)] as [number, number])
@@ -487,7 +521,7 @@ export function TrackingMap({
             }
         }
 
-        // Otras embarcaciones
+        // Otras embarcaciones (capa estática — sin cluster)
         if (showAllVessels) {
             allVessels.forEach(vessel => {
                 const lat = parseFloat(vessel.latitude || '0')
@@ -502,36 +536,35 @@ export function TrackingMap({
                         </div>
                     `)
                     marker.addTo(map)
-                    markersMapRef.current.set(-vessel.id, marker) // id negativo para no colisionar
+                    markersMapRef.current.set(-vessel.id, marker)
                 }
             })
         }
 
-        // fitBounds — SOLO aquí, nunca en el efecto de selección
+        // fitBounds — centra y ajusta el zoom. Cuando termina la animación se
+        // dispara zoomend → debouncedRender → renderVisibleMarkers automáticamente.
         if (isLive) {
-            // En Live: centrar en el último punto (zoom 16 fijo para ver la posición actual)
             const last = sorted[sorted.length - 1]
             const lat  = Number(last.latitude)
             const lng  = Number(last.longitude)
             if (!isNaN(lat) && !isNaN(lng)) map.setView([lat, lng], 16)
+            renderFnRef.current()   // en live no hay zoomend → llamar directo
         } else {
-            const trackingMarkers = sorted
-                .map(t => markersMapRef.current.get(t.id))
-                .filter((m): m is import('leaflet').Marker => m !== undefined)
-            if (trackingMarkers.length > 0) {
-                const group = L.featureGroup(trackingMarkers)
-                map.fitBounds(group.getBounds().pad(0.15))
+            const validCoords = sorted
+                .filter(t => !isNaN(Number(t.latitude)) && !isNaN(Number(t.longitude)))
+                .map(t => [Number(t.latitude), Number(t.longitude)] as [number, number])
+            if (validCoords.length > 0) {
+                map.fitBounds(L.latLngBounds(validCoords).pad(0.15))
+                // fitBounds dispara zoomend → renderVisibleMarkers (via debounce)
+                // Llamamos también directo para el caso en que el bounds no cambie zoom
+                map.once('zoomend', () => renderFnRef.current())
             }
         }
 
-        // Reset del ref de selección previa (los marcadores son nuevos)
         prevSelectedIdRef.current = selectedTrackingRef.current?.id ?? null
 
-        const liveLabel = isLive ? ' · LIVE' : ''
-        setMapStatus(`${trackings.length} punto${trackings.length !== 1 ? 's' : ''}${showTrajectory ? ' · con trayectoria' : ''}${liveLabel}`)
-
     }, [isReady, trackings, showTrajectory, showAllVessels, allVessels, isLive,
-        createTrackingIcon, createVesselIcon, onTrackingClick])
+        createVesselIcon, renderVisibleMarkers])
 
     // ── Effect 2: solo cambia el icono seleccionado y hace panTo ─────────────
     // NO llama fitBounds → el zoom del usuario se preserva
@@ -541,9 +574,9 @@ export function TrackingMap({
 
         // Restaurar icono del punto anteriormente seleccionado
         if (prevSelectedIdRef.current !== null) {
-            const prevMarker = markersMapRef.current.get(prevSelectedIdRef.current)
+            const prevMarker  = markersMapRef.current.get(prevSelectedIdRef.current)
             if (prevMarker) {
-                const wasLast   = prevSelectedIdRef.current === lastTrackingIdRef.current
+                const wasLast    = prevSelectedIdRef.current === lastTrackingIdRef.current
                 const prevSeqNum = seqNumMapRef.current.get(prevSelectedIdRef.current) ?? 1
                 prevMarker.setIcon(createTrackingIcon(false, wasLast, prevSeqNum))
             }
@@ -551,30 +584,24 @@ export function TrackingMap({
 
         // Aplicar icono al nuevo punto seleccionado
         if (selectedTracking) {
-            const marker = markersMapRef.current.get(selectedTracking.id)
-            const seqNum = seqNumMapRef.current.get(selectedTracking.id) ?? 1
-
             const lat = Number(selectedTracking.latitude)
             const lng = Number(selectedTracking.longitude)
 
-            if (marker) {
-                marker.setIcon(createTrackingIcon(true, false, seqNum))
+            const marker = markersMapRef.current.get(selectedTracking.id)
 
+            if (marker) {
+                // El marcador ya está en pantalla: solo cambiar icono
+                const seqNum = seqNumMapRef.current.get(selectedTracking.id) ?? 1
+                marker.setIcon(createTrackingIcon(true, false, seqNum))
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    if (!isLive && clusterGroupRef.current) {
-                        // Histórico: el marcador puede estar en un cluster
-                        clusterGroupRef.current.zoomToShowLayer(marker, () => {
-                            marker.openPopup()
-                        })
-                    } else {
-                        // Live o marcador ya visible: solo panTo
-                        map.panTo([lat, lng], { animate: true, duration: 0.4 })
-                        if (marker.getPane()) marker.openPopup()
-                    }
+                    map.panTo([lat, lng], { animate: true, duration: 0.4 })
+                    if (marker.getPane()) marker.openPopup()
                 }
             } else if (!isNaN(lat) && !isNaN(lng)) {
-                // En Live el marcador histórico no está en el mapa → solo panTo
+                // El marcador no está en pantalla (fuera del viewport actual o decimado)
+                // → panTo para llevarlo al viewport; zoomend disparará renderVisibleMarkers
                 map.panTo([lat, lng], { animate: true, duration: 0.4 })
+                map.once('moveend', () => renderFnRef.current())
             }
         }
 
