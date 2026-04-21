@@ -22,27 +22,16 @@ export const trackingService = {
     from: string,
     to: string
   ): Promise<Tracking[]> => {
-    const PER_PAGE = 1000
-    let page = 1
-    let lastPage = 1
-    const allData: Tracking[] = []
-
-    do {
-      const response = await api.get<PaginatedTrackingResponse>(`/trackings`, {
-        params: {
-          vessel_id: vesselId,
-          date_from: from,
-          date_to: to,
-          per_page: PER_PAGE,
-          page,
-        },
-      })
-      allData.push(...response.data.data)
-      lastPage = response.data.meta.last_page
-      page++
-    } while (page <= lastPage)
-
-    return allData
+    const response = await api.get<PaginatedTrackingResponse>(`/trackings`, {
+      params: {
+        vessel_id: vesselId,
+        date_from: from,
+        date_to: to,
+        per_page: 1000,
+        page: 1,
+      },
+    })
+    return response.data.data
   },
 
   /**
