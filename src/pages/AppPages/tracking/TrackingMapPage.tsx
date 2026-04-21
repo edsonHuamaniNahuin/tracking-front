@@ -4,14 +4,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { TrackingMap } from "@/components/tracking/tracking-map"
 import { TrackingTimeline } from "@/components/tracking/tracking-timeline"
 import { TrackingStats } from "@/components/tracking/tracking-stats"
+import { useLiveTracking } from "@/hooks/useLiveTracking"
 import {
-    CalendarIcon,
     Ship,
     MapPin,
     Route,
@@ -22,9 +21,10 @@ import {
     Minimize2,
     PanelRightOpen,
     PanelRightClose,
+    Radio,
+    WifiOff,
 } from "lucide-react"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
 import { trackingService } from "@/services/tracking.service"
 import { vesselService } from "@/services/vessel.service"
 import { dashboardService } from "@/services/dashboard.service"
@@ -44,7 +44,11 @@ export default function TrackingMapPage() {
     const [error, setError] = useState<string | null>(null)
 
     // Estados de filtros
-    const [dateFrom, setDateFrom] = useState<Date>(new Date(Date.now() - 365 * 24 * 60 * 60 * 1000))
+    const [dateFrom, setDateFrom] = useState<Date>(() => {
+        const d = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+        d.setHours(0, 0, 0, 0)
+        return d
+    })
     const [dateTo, setDateTo] = useState<Date>(new Date())
     const [showTrajectory, setShowTrajectory] = useState(true)
     const [showAllVessels, setShowAllVessels] = useState(false)
@@ -52,6 +56,15 @@ export default function TrackingMapPage() {
 
     // Evitar loop: leemos el param de URL solo en el primer montaje
     const initialParamRead = useRef(false)
+
+    // ── ESC para salir de pantalla completa ──────────────────────────────────
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsFullscreen(false)
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
     // Layout
     const [isFullscreen, setIsFullscreen] = useState(false)
@@ -88,8 +101,8 @@ export default function TrackingMapPage() {
         setSelectedTracking(null)
 
         try {
-            const from = format(dateFrom, 'yyyy-MM-dd')
-            const to = format(dateTo, 'yyyy-MM-dd')
+            const from = format(dateFrom, 'yyyy-MM-dd HH:mm:ss')
+            const to = format(dateTo, 'yyyy-MM-dd HH:mm:59')
             const data = await trackingService.getTrackings(selectedVessel, from, to)
             setTrackings(Array.isArray(data) ? data : [])
             // Actualizar URL sin disparar re-render del efecto de carga de vessels
@@ -107,6 +120,23 @@ export default function TrackingMapPage() {
     }, [loadTrackings])
 
     const selectedVesselData = vessels.find(v => v.id === selectedVessel)
+
+    // ── Live refresh silencioso ───────────────────────────────────────────────
+    // No toca isLoading ni selectedTracking: el mapa/stats/timeline no parpadean
+    const liveRefresh = useCallback(async () => {
+        if (!selectedVessel) return
+        try {
+            const from = format(dateFrom, 'yyyy-MM-dd HH:mm:ss')
+            const to   = format(new Date(), 'yyyy-MM-dd HH:mm:59')
+            const data = await trackingService.getTrackings(selectedVessel, from, to)
+            if (Array.isArray(data)) setTrackings(data)
+        } catch { /* fallo silencioso — no interrumpir la vista live */ }
+    }, [selectedVessel, dateFrom])
+
+    const { isLive, toggle: toggleLive, countdown } = useLiveTracking({
+        onTick: liveRefresh,
+        intervalMs: 15_000,
+    })
 
     // ── Contenido del panel lateral (reutilizado en normal y fullscreen) ──
     const sidePanel = trackings.length > 0 ? (
@@ -151,6 +181,17 @@ export default function TrackingMapPage() {
                         isLoading={isLoading}
                     />
 
+                    {/* Indicador LIVE flotante */}
+                    {isLive && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                            </span>
+                            LIVE · {countdown}s
+                        </div>
+                    )}
+
                     {/* Barra superior flotante */}
                     <div className="absolute top-3 right-3 flex items-center gap-2 z-[1001]">
                         <Button
@@ -185,7 +226,7 @@ export default function TrackingMapPage() {
 
                 {/* Panel lateral flotante */}
                 {showSidePanel && (
-                    <div className="w-80 border-l bg-background overflow-y-auto p-3">
+                    <div className="relative z-[1] w-80 border-l bg-background overflow-y-auto p-3">
                         {/* Filtros compactos */}
                         <div className="space-y-2 mb-3">
                             <Select
@@ -237,10 +278,33 @@ export default function TrackingMapPage() {
                         Rutas y trayectorias de embarcaciones
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadTrackings} disabled={!selectedVessel || isLoading}>
-                    <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-                    Actualizar
-                </Button>
+                <div className="flex items-center gap-2">
+                    {isLive && (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                            </span>
+                            LIVE · {countdown}s
+                        </div>
+                    )}
+                    <Button
+                        variant={isLive ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={toggleLive}
+                        disabled={!selectedVessel}
+                        title={isLive ? 'Detener modo live' : 'Activar modo live (refresco automático cada 15 s)'}
+                    >
+                        {isLive
+                            ? <><WifiOff className="h-4 w-4 mr-1.5" />Detener Live</>
+                            : <><Radio className="h-4 w-4 mr-1.5" />Live</>
+                        }
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={loadTrackings} disabled={!selectedVessel || isLoading || isLive}>
+                        <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+                        Actualizar
+                    </Button>
+                </div>
             </div>
 
             {/* Filtros — una sola fila */}
@@ -271,32 +335,20 @@ export default function TrackingMapPage() {
 
                         <div className="space-y-1">
                             <Label className="text-xs">Desde</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="h-8 text-xs font-normal">
-                                        <CalendarIcon className="mr-1.5 h-3 w-3 text-muted-foreground" />
-                                        {format(dateFrom, "dd MMM yyyy", { locale: es })}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={dateFrom} onSelect={d => d && setDateFrom(d)} disabled={d => d > dateTo} initialFocus locale={es} />
-                                </PopoverContent>
-                            </Popover>
+                            <DateTimePicker
+                                value={dateFrom}
+                                onChange={setDateFrom}
+                                disabled={d => d > dateTo || isLive}
+                            />
                         </div>
 
                         <div className="space-y-1">
                             <Label className="text-xs">Hasta</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="h-8 text-xs font-normal">
-                                        <CalendarIcon className="mr-1.5 h-3 w-3 text-muted-foreground" />
-                                        {format(dateTo, "dd MMM yyyy", { locale: es })}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={dateTo} onSelect={d => d && setDateTo(d)} disabled={d => d < dateFrom || d > new Date()} initialFocus locale={es} />
-                                </PopoverContent>
-                            </Popover>
+                            <DateTimePicker
+                                value={dateTo}
+                                onChange={setDateTo}
+                                disabled={d => d < dateFrom || d > new Date() || isLive}
+                            />
                         </div>
 
                         <div className="flex items-center gap-3 pb-0.5">

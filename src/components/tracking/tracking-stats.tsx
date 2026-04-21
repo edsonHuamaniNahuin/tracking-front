@@ -64,6 +64,8 @@ export function TrackingStats({ trackings, vessel, isLoading = false }: Tracking
             const current = sortedTrackings[i]
             const previous = sortedTrackings[i - 1]
 
+            let segmentDistanceKm = 0
+
             // Calcular distancia entre puntos
             if (current.latitude && current.longitude && previous.latitude && previous.longitude) {
                 const R = 6371 // Radio de la Tierra en km
@@ -78,28 +80,38 @@ export function TrackingStats({ trackings, vessel, isLoading = false }: Tracking
                     Math.cos(curLat * Math.PI / 180) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2)
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                const distance = R * c
-                totalDistance += distance
+                segmentDistanceKm = R * c
+                totalDistance += segmentDistanceKm
             }
 
             // Calcular tiempo entre puntos
             const currentTime = new Date(current.reportedAt || current.tracked_at || current.created_at)
             const previousTime = new Date(previous.reportedAt || previous.tracked_at || previous.created_at)
-            const timeDiff = differenceInMinutes(currentTime, previousTime)
-            totalTime += timeDiff
+            const timeDiffMin = differenceInMinutes(currentTime, previousTime)
+            const timeDiffHours = (currentTime.getTime() - previousTime.getTime()) / 3_600_000
+            totalTime += timeDiffMin
 
-            // Clasificar tiempo como en movimiento o parado
-            const speed = current.speed || 0
-            if (speed > 1) {
-                timeMoving += timeDiff
+            // Calcular velocidad: usar speed del backend si existe y es > 0,
+            // de lo contrario calcularla desde distancia/tiempo en nudos
+            let segmentSpeed: number
+            if (current.speed !== undefined && current.speed !== null && current.speed > 0) {
+                segmentSpeed = current.speed
+            } else if (segmentDistanceKm > 0 && timeDiffHours > 0) {
+                // Convertir km/h a nudos (1 kn = 1.852 km/h)
+                segmentSpeed = (segmentDistanceKm / timeDiffHours) / 1.852
             } else {
-                timeStopped += timeDiff
+                segmentSpeed = 0
             }
 
-            // Recopilar velocidades y cursos
-            if (current.speed !== undefined && current.speed !== null) {
-                speeds.push(current.speed)
+            speeds.push(segmentSpeed)
+
+            // Clasificar tiempo como en movimiento o parado (umbral 0.5 kn)
+            if (segmentSpeed > 0.5) {
+                timeMoving += timeDiffMin
+            } else {
+                timeStopped += timeDiffMin
             }
+
             if (current.course !== undefined && current.course !== null) {
                 courses.push(current.course)
             }
@@ -231,14 +243,34 @@ export function TrackingStats({ trackings, vessel, isLoading = false }: Tracking
                     </div>
                 </div>
 
-                {/* Velocidad — fila horizontal */}
-                <div className="flex items-center gap-3 text-xs border-t pt-2">
-                    <Gauge className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <div className="flex gap-4">
-                        <span>Máx: <strong className="text-green-600">{formatSpeed(stats.maxSpeed)}</strong></span>
-                        <span>Prom: <strong className="text-blue-600">{formatSpeed(stats.avgSpeed)}</strong></span>
-                        <span>Mín: <strong className="text-orange-600">{formatSpeed(stats.minSpeed)}</strong></span>
+                {/* Velocidad — con barra visual */}
+                <div className="border-t pt-2 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs">
+                        <Gauge className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="font-medium text-muted-foreground">Velocidad</span>
                     </div>
+                    <div className="grid grid-cols-3 gap-1 text-center text-xs">
+                        <div className="rounded bg-green-50 dark:bg-green-950/30 px-2 py-1">
+                            <div className="font-bold text-green-600">{formatSpeed(stats.maxSpeed)}</div>
+                            <div className="text-[10px] text-muted-foreground">Máx</div>
+                        </div>
+                        <div className="rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1">
+                            <div className="font-bold text-blue-600">{formatSpeed(stats.avgSpeed)}</div>
+                            <div className="text-[10px] text-muted-foreground">Prom</div>
+                        </div>
+                        <div className="rounded bg-orange-50 dark:bg-orange-950/30 px-2 py-1">
+                            <div className="font-bold text-orange-600">{formatSpeed(stats.minSpeed)}</div>
+                            <div className="text-[10px] text-muted-foreground">Mín</div>
+                        </div>
+                    </div>
+                    {stats.maxSpeed > 0 && (
+                        <div className="space-y-0.5">
+                            <Progress value={(stats.avgSpeed / stats.maxSpeed) * 100} className="h-1.5" />
+                            <div className="text-[10px] text-muted-foreground text-right">
+                                Prom es el {((stats.avgSpeed / stats.maxSpeed) * 100).toFixed(0)}% del máx
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actividad — barras inline */}
