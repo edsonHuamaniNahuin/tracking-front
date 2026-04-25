@@ -57,6 +57,7 @@ export const LoginForm: FC<LoginFieldsProps> = ({
           id="password"
           type="password"
           required
+          autoComplete="new-password"
           value={password}
           onChange={(e) => onPasswordChange(e.currentTarget.value)}
         />

@@ -91,6 +91,45 @@ export const trackingService = {
   },
 
   /**
+   * Devuelve los días (YYYY-MM-DD) en que la embarcación tiene registros.
+   *
+   * Estrategia de caché (sessionStorage, clave `tk_days_{vesselId}`):
+   *   - Se guarda `{ days: string[], cachedAt: string }` donde `cachedAt` es la
+   *     fecha de hoy en formato YYYY-MM-DD.
+   *   - Al leer: si `cachedAt === hoy` → caché válida, sin petición a red.
+   *   - Si `cachedAt < hoy` → la embarcación puede tener días nuevos (días
+   *     transcurridos desde el último caché). Se refetch y se actualiza el caché.
+   *   - Así el dato nunca queda desactualizado al avanzar días de calendario.
+   *
+   * Consulta ligera en el backend: GROUP BY DATE(tracked_at) con índice compuesto.
+   */
+  getVesselTrackingDays: async (vesselId: number): Promise<string[]> => {
+    const cacheKey = `tk_days_${vesselId}`
+    const today    = new Date().toISOString().slice(0, 10)   // YYYY-MM-DD local naive
+
+    const rawCached = sessionStorage.getItem(cacheKey)
+    if (rawCached) {
+      try {
+        const parsed = JSON.parse(rawCached) as { days: string[]; cachedAt: string }
+        if (parsed.cachedAt === today) {
+          // Caché creada hoy → todavía válida
+          return parsed.days
+        }
+        // cachedAt < hoy → pueden haber días nuevos; continúa al fetch
+      } catch { /* formato inválido → refetch */ }
+    }
+
+    const response = await api.get<{ data: string[] }>(`/vessels/${vesselId}/tracking-days`)
+    const days: string[] = response.data.data ?? []
+
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ days, cachedAt: today }))
+    } catch { /* quota exceeded — caché omitida */ }
+
+    return days
+  },
+
+  /**
    * Procesa un array de trackings:
    * - Ordena por fecha
    * - Calcula distancias diarias y cuenta de puntos

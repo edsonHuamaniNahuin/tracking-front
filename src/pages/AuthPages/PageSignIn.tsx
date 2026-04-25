@@ -12,8 +12,8 @@ export default function PageSignIn() {
     if (user) navigate('/', { replace: true })
   }, [user, navigate])
 
-  const [email, setEmail] = useState('admin@tracking.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

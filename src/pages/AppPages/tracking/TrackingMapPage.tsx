@@ -1,11 +1,12 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react"
+﻿import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { DateTimePicker } from "@/components/ui/date-time-picker"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { TrackingMap } from "@/components/tracking/tracking-map"
 import { TrackingTimeline } from "@/components/tracking/tracking-timeline"
 import { TrackingStats } from "@/components/tracking/tracking-stats"
@@ -23,8 +24,11 @@ import {
     PanelRightClose,
     Radio,
     WifiOff,
+    CalendarIcon,
+    Clock,
 } from "lucide-react"
-import { format } from "date-fns"
+import { format, isSameDay, startOfDay, subDays } from "date-fns"
+import { es } from "date-fns/locale"
 import { trackingService } from "@/services/tracking.service"
 import { vesselService } from "@/services/vessel.service"
 import { dashboardService } from "@/services/dashboard.service"
@@ -45,13 +49,18 @@ export default function TrackingMapPage() {
     const [isCheckingDevice, setIsCheckingDevice] = useState(false)
     const [deviceOfflineMsg, setDeviceOfflineMsg] = useState<string | null>(null)
 
-    // Estados de filtros
-    const [dateFrom, setDateFrom] = useState<Date>(() => {
-        const d = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-        d.setHours(0, 0, 0, 0)
-        return d
-    })
-    const [dateTo, setDateTo] = useState<Date>(new Date())
+    // Días con registros para la embarcación seleccionada (cacheados en sessionStorage)
+    const [availableDays, setAvailableDays] = useState<string[]>([])
+    const [isLoadingDays, setIsLoadingDays] = useState(false)
+
+    // Estados de filtros por día
+    const [selectedDay, setSelectedDay] = useState<Date>(() => startOfDay(new Date()))
+    // Datos del día completo traídos del backend (cacheados en sessionStorage para histórico)
+    const [rawDayTrackings, setRawDayTrackings] = useState<Tracking[]>([])
+    // Filtro de horas aplicado localmente sobre rawDayTrackings (sin petición al backend)
+    const [timeFrom, setTimeFrom] = useState(0)   // hora inicio 0-23
+    const [timeTo, setTimeTo] = useState(23)       // hora fin 0-23
+    const [dayPickerOpen, setDayPickerOpen] = useState(false)
     const [showTrajectory, setShowTrajectory] = useState(true)
     const [showAllVessels, setShowAllVessels] = useState(false)
     const [vesselPositions, setVesselPositions] = useState<VesselPosition[]>([])
@@ -87,13 +96,25 @@ export default function TrackingMapPage() {
             .catch(() => setError('Error al cargar las embarcaciones'))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])   // â† sin searchParams para evitar loop
-    // â"€â"€ Cargar posiciones de embarcaciones para el mapa â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+    // ── Cargar posiciones de embarcaciones para el mapa ──────────────────────
     useEffect(() => {
         if (!showAllVessels) return
         dashboardService.getStats()
             .then(data => setVesselPositions(data.vessel_positions ?? []))
             .catch(() => { /* posiciones opcionales — fallo silencioso */ })
     }, [showAllVessels])
+
+    // ── Cargar días con datos al seleccionar embarcación ─────────────────────
+    // Primera vez → consulta backend + guarda en sessionStorage.
+    // Siguientes veces → el servicio devuelve la caché sin llamada a red.
+    useEffect(() => {
+        if (!selectedVessel) { setAvailableDays([]); return }
+        setIsLoadingDays(true)
+        trackingService.getVesselTrackingDays(selectedVessel)
+            .then(days => setAvailableDays(days))
+            .catch(() => setAvailableDays([]))  // fallo silencioso: Calendar sin restricción
+            .finally(() => setIsLoadingDays(false))
+    }, [selectedVessel])
     // â”€â”€ Cargar trackings cuando cambie embarcaciÃ³n o fechas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const loadTrackings = useCallback(async () => {
         if (!selectedVessel) return
@@ -101,36 +122,45 @@ export default function TrackingMapPage() {
         setIsLoading(true)
         setError(null)
         setSelectedTracking(null)
+        setRawDayTrackings([])   // limpiar datos del día anterior de inmediato
 
         try {
-            const from = format(dateFrom, 'yyyy-MM-dd HH:mm:ss')
-            const to = format(dateTo, 'yyyy-MM-dd HH:mm:59')
+            const dayStr = format(selectedDay, 'yyyy-MM-dd')
+            const isToday = isSameDay(selectedDay, new Date())
+            // Histórico → solo fecha (el servicio normaliza a startOfDay/endOfDay y cachea)
+            // Hoy → incluir hora para evitar normalización y obtener datos en tiempo real
+            const from = isToday ? `${dayStr} 00:00:00` : dayStr
+            const to   = isToday ? `${dayStr} 23:59:59` : dayStr
             const data = await trackingService.getTrackings(selectedVessel, from, to)
-
-            // Para días históricos el servicio pide el día completo al backend y
-            // lo devuelve completo desde cache. Filtramos localmente por la
-            // selección de horas del usuario para que el UI sea preciso.
-            const filtered = Array.isArray(data)
-                ? data.filter(t => {
-                    const d = new Date(t.tracked_at)
-                    return d >= dateFrom && d <= dateTo
-                })
-                : []
-
-            setTrackings(filtered)
-            // Actualizar URL sin disparar re-render del efecto de carga de vessels
+            setRawDayTrackings(Array.isArray(data) ? data : [])
             setSearchParams({ vessel: selectedVessel.toString() }, { replace: true })
         } catch {
             setError('Error al cargar los datos de tracking')
-            setTrackings([])
+            setRawDayTrackings([])
         } finally {
             setIsLoading(false)
         }
-    }, [selectedVessel, dateFrom, dateTo, setSearchParams])
+    }, [selectedVessel, selectedDay, setSearchParams])
 
     useEffect(() => {
         loadTrackings()
     }, [loadTrackings])
+
+    // Aplicar filtro de horas localmente sobre los datos del día completo (sin re-fetch)
+    useEffect(() => {
+        if (rawDayTrackings.length === 0) {
+            setTrackings([])
+            return
+        }
+        const from = new Date(selectedDay)
+        from.setHours(timeFrom, 0, 0, 0)
+        const to = new Date(selectedDay)
+        to.setHours(timeTo, 59, 59, 999)
+        setTrackings(rawDayTrackings.filter(t => {
+            const d = new Date(t.tracked_at)
+            return d >= from && d <= to
+        }))
+    }, [rawDayTrackings, selectedDay, timeFrom, timeTo])
 
     const selectedVesselData = vessels.find(v => v.id === selectedVessel)
 
@@ -138,13 +168,14 @@ export default function TrackingMapPage() {
     // No toca isLoading ni selectedTracking: el mapa/stats/timeline no parpadean
     const liveRefresh = useCallback(async () => {
         if (!selectedVessel) return
+        if (!isSameDay(selectedDay, new Date())) return  // live solo tiene sentido para hoy
         try {
-            const from = format(dateFrom, 'yyyy-MM-dd HH:mm:ss')
-            const to   = format(new Date(), 'yyyy-MM-dd HH:mm:59')
-            const data = await trackingService.getTrackings(selectedVessel, from, to)
-            if (Array.isArray(data)) setTrackings(data)
+            const dayStr = format(selectedDay, 'yyyy-MM-dd')
+            const to     = format(new Date(), 'yyyy-MM-dd HH:mm:59')
+            const data   = await trackingService.getTrackings(selectedVessel, `${dayStr} 00:00:00`, to)
+            if (Array.isArray(data)) setRawDayTrackings(data)
         } catch { /* fallo silencioso — no interrumpir la vista live */ }
-    }, [selectedVessel, dateFrom])
+    }, [selectedVessel, selectedDay])
 
     const { isLive, toggle: toggleLive, countdown } = useLiveTracking({
         onTick: liveRefresh,
@@ -160,6 +191,9 @@ export default function TrackingMapPage() {
         try {
             const status = await vesselService.getDeviceStatus(selectedVessel)
             if (status.is_online) {
+                setSelectedDay(startOfDay(new Date()))
+                setTimeFrom(0)
+                setTimeTo(23)
                 toggleLive()
             } else {
                 const lastSeen = status.last_seen_at
@@ -173,6 +207,13 @@ export default function TrackingMapPage() {
             setIsCheckingDevice(false)
         }
     }, [isLive, selectedVessel, toggleLive])
+
+    // ── Días con datos → convertidos a Date[] para react-day-picker modifiers ──
+    // useMemo evita recrear el array en cada render
+    const daysWithData = useMemo(
+        () => availableDays.map(d => new Date(`${d}T00:00:00`)),
+        [availableDays]
+    )
 
     // ── Contenido del panel lateral (reutilizado en normal y fullscreen) ──
     const sidePanel = trackings.length > 0 ? (
@@ -292,6 +333,13 @@ export default function TrackingMapPage() {
                                     Otras
                                 </label>
                             </div>
+
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-0.5">
+                                <CalendarIcon className="h-3 w-3" />
+                                <span>{format(selectedDay, 'dd/MM/yyyy')}</span>
+                                <Clock className="h-3 w-3 ml-1" />
+                                <span>{String(timeFrom).padStart(2, '0')}:00 – {String(timeTo).padStart(2, '0')}:59</span>
+                            </div>
                         </div>
 
                         {sidePanel}
@@ -386,22 +434,102 @@ export default function TrackingMapPage() {
                             </Select>
                         </div>
 
+                        {/* Selector de día */}
                         <div className="space-y-1">
-                            <Label className="text-xs">Desde</Label>
-                            <DateTimePicker
-                                value={dateFrom}
-                                onChange={setDateFrom}
-                                disabled={d => d > dateTo || isLive}
-                            />
+                            <Label className="text-xs flex items-center gap-1">
+                                Día
+                                {isLoadingDays && <span className="text-[10px] text-muted-foreground ml-1">cargando…</span>}
+                                {!isLoadingDays && availableDays.length > 0 && (
+                                    <span className="text-[10px] text-blue-600 ml-1">● días con datos</span>
+                                )}
+                            </Label>
+                            <Popover open={dayPickerOpen} onOpenChange={setDayPickerOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isLive}
+                                        className="h-8 text-xs font-normal gap-1.5 min-w-[120px] justify-start"
+                                    >
+                                        <CalendarIcon className="h-3 w-3 shrink-0" />
+                                        {format(selectedDay, "dd/MM/yyyy")}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={selectedDay}
+                                        onSelect={(d) => {
+                                            if (!d) return
+                                            setSelectedDay(startOfDay(d))
+                                            setTimeFrom(0)
+                                            setTimeTo(23)
+                                            setDayPickerOpen(false)
+                                        }}
+                                        disabled={(d) => {
+                                            if (d > new Date()) return true
+                                            // Si ya tenemos los días cargados, deshabilitar días sin datos
+                                            if (!isLoadingDays && availableDays.length > 0) {
+                                                return !availableDays.includes(format(d, 'yyyy-MM-dd'))
+                                            }
+                                            return false
+                                        }}
+                                        modifiers={{ hasData: daysWithData }}
+                                        modifiersClassNames={{ hasData: 'day-has-data' }}
+                                        locale={es}
+                                        initialFocus
+                                    />
+                                    <div className="p-2 border-t flex gap-1">
+                                        <Button size="sm" variant="ghost" className="text-xs h-6" onClick={() => { setSelectedDay(startOfDay(new Date())); setTimeFrom(0); setTimeTo(23); setDayPickerOpen(false) }}>Hoy</Button>
+                                        <Button size="sm" variant="ghost" className="text-xs h-6" onClick={() => { setSelectedDay(startOfDay(subDays(new Date(), 1))); setTimeFrom(0); setTimeTo(23); setDayPickerOpen(false) }}>Ayer</Button>
+                                        <Button size="sm" variant="ghost" className="text-xs h-6" onClick={() => { setSelectedDay(startOfDay(subDays(new Date(), 7))); setTimeFrom(0); setTimeTo(23); setDayPickerOpen(false) }}>-7 días</Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
-                        <div className="space-y-1">
-                            <Label className="text-xs">Hasta</Label>
-                            <DateTimePicker
-                                value={dateTo}
-                                onChange={setDateTo}
-                                disabled={d => d < dateFrom || d > new Date() || isLive}
-                            />
+                        {/* Filtro de horas — aplicado localmente sin nueva petición al backend */}
+                        <div className="flex items-end gap-1.5">
+                            <div className="space-y-1">
+                                <Label className="text-xs flex items-center gap-1">
+                                    <Clock className="h-3 w-3" /> Hora desde
+                                </Label>
+                                <Select
+                                    value={timeFrom.toString()}
+                                    onValueChange={v => setTimeFrom(parseInt(v))}
+                                    disabled={isLive}
+                                >
+                                    <SelectTrigger className="h-8 w-[88px] text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from({ length: 24 }, (_, i) => (
+                                            <SelectItem key={i} value={i.toString()} className="text-xs">
+                                                {String(i).padStart(2, '0')}:00
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">Hora hasta</Label>
+                                <Select
+                                    value={timeTo.toString()}
+                                    onValueChange={v => setTimeTo(parseInt(v))}
+                                    disabled={isLive}
+                                >
+                                    <SelectTrigger className="h-8 w-[88px] text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from({ length: 24 }, (_, i) => (
+                                            <SelectItem key={i} value={i.toString()} disabled={i < timeFrom} className="text-xs">
+                                                {String(i).padStart(2, '0')}:59
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-3 pb-0.5">
