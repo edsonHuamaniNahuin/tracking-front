@@ -1,5 +1,6 @@
 // src/services/tracking.service.ts
 import api from './api'
+import { trackingCacheService } from './trackingCache.service'
 import type { CreateTrackingRequest, Tracking } from '@/types/tracking'
 import { PaginatedTrackingResponse } from '@/types/pagination/paginatedTrackingResponse'
 
@@ -46,10 +47,8 @@ export const trackingService = {
     const cacheKey = `tk_${vesselId}_${apiFrom}_${apiTo}`
 
     if (isHistorical) {
-      const cached = sessionStorage.getItem(cacheKey)
-      if (cached) {
-        try { return JSON.parse(cached) as Tracking[] } catch { /* parse fail → refetch */ }
-      }
+      const cached = await trackingCacheService.get(cacheKey)
+      if (cached) return cached
     }
 
     // Loop secuencial: espera cada página antes de pedir la siguiente.
@@ -74,7 +73,8 @@ export const trackingService = {
     } while (page <= lastPage)
 
     if (isHistorical) {
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(allData)) } catch { /* quota exceeded — skip */ }
+      // Guardar en IndexedDB (capacidad mucho mayor que sessionStorage)
+      await trackingCacheService.set(cacheKey, allData)
     }
 
     return allData

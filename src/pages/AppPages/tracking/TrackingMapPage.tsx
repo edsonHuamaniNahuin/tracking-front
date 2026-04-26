@@ -112,8 +112,17 @@ export default function TrackingMapPage() {
         setIsLoadingDays(true)
         trackingService.getVesselTrackingDays(selectedVessel)
             .then(days => setAvailableDays(days))
-            .catch(() => setAvailableDays([]))  // fallo silencioso: Calendar sin restricción
-            .finally(() => setIsLoadingDays(false))
+        .catch(() => setAvailableDays([]))
+        .finally(() => setIsLoadingDays(false))
+    }, [selectedVessel])
+
+    // ── Sincronizar URL al cambiar embarcación (sin que afecte loadTrackings) ─
+    const setSearchParamsRef = useRef(setSearchParams)
+    setSearchParamsRef.current = setSearchParams
+    useEffect(() => {
+        if (selectedVessel) {
+            setSearchParamsRef.current({ vessel: selectedVessel.toString() }, { replace: true })
+        }
     }, [selectedVessel])
     // â”€â”€ Cargar trackings cuando cambie embarcaciÃ³n o fechas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const loadTrackings = useCallback(async () => {
@@ -131,16 +140,15 @@ export default function TrackingMapPage() {
             // Hoy → incluir hora para evitar normalización y obtener datos en tiempo real
             const from = isToday ? `${dayStr} 00:00:00` : dayStr
             const to   = isToday ? `${dayStr} 23:59:59` : dayStr
-            const data = await trackingService.getTrackings(selectedVessel, from, to)
+            const data    = await trackingService.getTrackings(selectedVessel, from, to)
             setRawDayTrackings(Array.isArray(data) ? data : [])
-            setSearchParams({ vessel: selectedVessel.toString() }, { replace: true })
         } catch {
             setError('Error al cargar los datos de tracking')
             setRawDayTrackings([])
         } finally {
             setIsLoading(false)
         }
-    }, [selectedVessel, selectedDay, setSearchParams])
+    }, [selectedVessel, selectedDay])   // ← sin setSearchParams
 
     useEffect(() => {
         loadTrackings()
