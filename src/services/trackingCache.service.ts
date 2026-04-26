@@ -61,18 +61,19 @@ export const trackingCacheService = {
     }
   },
 
-  /** Guarda los trackings de un día histórico en caché. */
+  /** Guarda los trackings de un día en caché (históricos: inmutables; hoy: se sobreescribe). */
   async set(cacheKey: string, data: Tracking[]): Promise<void> {
     try {
       const db = await openDB()
-      return new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         const tx    = db.transaction(STORE_NAME, 'readwrite')
         const entry: CacheEntry = { cacheKey, data, savedAt: Date.now() }
         tx.objectStore(STORE_NAME).put(entry)
         tx.oncomplete = () => resolve()
         tx.onerror    = () => reject(tx.error)
+        tx.onabort    = () => reject(new Error('IDB transaction aborted'))
       })
-    } catch { /* IndexedDB no disponible */ }
+    } catch { /* IndexedDB no disponible o transacción fallida — falla silenciosa */ }
   },
 
   /** Elimina TODA la caché (llamar en logout por seguridad). */

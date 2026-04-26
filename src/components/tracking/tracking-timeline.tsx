@@ -1,11 +1,10 @@
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
     Clock,
-    MapPin,
     Navigation,
     Anchor,
     Activity,
@@ -29,26 +28,75 @@ export function TrackingTimeline({
     onTrackingSelect,
     isLoading = false
 }: TrackingTimelineProps) {
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')    // Ordenar trackings por fecha
-    const sortedTrackings = [...trackings].sort((a, b) => {
-        const dateA = new Date(a.reportedAt || a.tracked_at || a.created_at).getTime()
-        const dateB = new Date(b.reportedAt || b.tracked_at || b.created_at).getTime()
-        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB
-    })
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+    const [showAll, setShowAll] = useState(false)
 
-    // Función para obtener el estado del movimiento
-    const getMovementStatus = (tracking: Tracking, index: number) => {
-        if (index === 0 || sortedTrackings.length === 1) return 'initial'
+    // Resetear paginación cuando cambia el dataset
+    useEffect(() => { setShowAll(false) }, [trackings])
 
-        const prevTracking = sortedTrackings[index - 1]
-        const currentSpeed = tracking.speed || 0
-        const prevSpeed = prevTracking.speed || 0
+    // Memoizar el sort — evita re-ordenar en cada render (p.ej. cuando cambia selectedTracking)
+    const sortedTrackings = useMemo(() =>
+        [...trackings].sort((a, b) => {
+            // Strings ISO son comparables lexicográficamente — evita crear objetos Date
+            const ta = a.reportedAt || a.tracked_at || a.created_at
+            const tb = b.reportedAt || b.tracked_at || b.created_at
+            return sortOrder === 'desc'
+                ? (tb < ta ? -1 : tb > ta ? 1 : 0)
+                : (ta < tb ? -1 : ta > tb ? 1 : 0)
+        }),
+        [trackings, sortOrder]
+    )
 
-        if (currentSpeed > prevSpeed + 2) return 'accelerating'
-        if (currentSpeed < prevSpeed - 2) return 'decelerating'
-        if (currentSpeed < 1) return 'stopped'
-        return 'steady'
-    }
+    // Cap de nodos DOM: un ScrollArea de 280px muestra ~8 items; renderizar miles
+    // bloquea el hilo principal. Mostramos 200 por defecto con opción "ver todos".
+    const VISIBLE_LIMIT = 200
+    const displayedTrackings = useMemo(
+        () => (!showAll && sortedTrackings.length > VISIBLE_LIMIT)
+            ? sortedTrackings.slice(0, VISIBLE_LIMIT)
+            : sortedTrackings,
+        [sortedTrackings, showAll]
+    )
+    const hiddenCount = sortedTrackings.length - displayedTrackings.length
+
+    // Pre-computar valores costosos (Haversine, estado, parseo de fecha) una sola vez
+    // en lugar de recalcularlos en cada render.
+    const rows = useMemo(() =>
+        displayedTrackings.map((tracking, index) => {
+            const prev = displayedTrackings[index - 1]
+
+            const movementStatus = (() => {
+                if (index === 0 || displayedTrackings.length === 1) return 'initial'
+                const cs = Number(tracking.speed) || 0
+                const ps = Number(prev?.speed) || 0
+                if (cs > ps + 2) return 'accelerating'
+                if (cs < ps - 2) return 'decelerating'
+                if (cs < 1) return 'stopped'
+                return 'steady'
+            })()
+
+            const distance = (() => {
+                if (index === 0 || !prev?.latitude || !prev?.longitude ||
+                    !tracking.latitude || !tracking.longitude) return null
+                const lat1 = parseFloat(String(tracking.latitude))
+                const lon1 = parseFloat(String(tracking.longitude))
+                const lat2 = parseFloat(String(prev.latitude))
+                const lon2 = parseFloat(String(prev.longitude))
+                if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return null
+                const R = 6371
+                const dLat = (lat1 - lat2) * Math.PI / 180
+                const dLon = (lon1 - lon2) * Math.PI / 180
+                const a = Math.sin(dLat / 2) ** 2 +
+                    Math.cos(lat2 * Math.PI / 180) * Math.cos(lat1 * Math.PI / 180) *
+                    Math.sin(dLon / 2) ** 2
+                const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                return d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(2)}km`
+            })()
+
+            const reportDate = new Date(tracking.reportedAt || tracking.tracked_at || tracking.created_at)
+            return { tracking, movementStatus, distance, reportDate }
+        }),
+        [displayedTrackings]
+    )
 
     // Función para obtener el icono del estado
     const getStatusIcon = (status: string) => {
@@ -71,35 +119,6 @@ export function TrackingTimeline({
         const s = typeof speed === 'string' ? parseFloat(speed) : speed
         if (!s || isNaN(s)) return '0 kn'
         return `${s.toFixed(1)} kn`
-    }
-
-    // Función para formatear la distancia entre puntos
-    const calculateDistance = (tracking: Tracking, index: number) => {
-        if (index === 0 || sortedTrackings.length === 1) return null
-
-        const prevTracking = sortedTrackings[index - 1]
-        if (!prevTracking.latitude || !prevTracking.longitude ||
-            !tracking.latitude || !tracking.longitude) return null
-
-        const lat1 = parseFloat(String(tracking.latitude))
-        const lon1 = parseFloat(String(tracking.longitude))
-        const lat2 = parseFloat(String(prevTracking.latitude))
-        const lon2 = parseFloat(String(prevTracking.longitude))
-
-        if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return null
-
-        // Fórmula de Haversine para calcular distancia
-        const R = 6371 // Radio de la Tierra en km
-        const dLat = (lat1 - lat2) * Math.PI / 180
-        const dLon = (lon1 - lon2) * Math.PI / 180
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat2 * Math.PI / 180) *
-            Math.cos(lat1 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        const distance = R * c
-
-        return distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(2)}km`
     }
 
     if (isLoading) {
@@ -175,11 +194,8 @@ export function TrackingTimeline({
             <CardContent className="px-4 pb-3">
                 <ScrollArea className="h-[280px] pr-2">
                     <div className="space-y-1">
-                        {sortedTrackings.map((tracking, index) => {
+                        {rows.map(({ tracking, movementStatus, distance, reportDate }) => {
                             const isSelected = selectedTracking?.id === tracking.id
-                            const movementStatus = getMovementStatus(tracking, index)
-                            const distance = calculateDistance(tracking, index)
-                            const reportDate = new Date(tracking.reportedAt || tracking.tracked_at || tracking.created_at)
 
                             return (
                                 <div
@@ -216,6 +232,14 @@ export function TrackingTimeline({
                                 </div>
                             )
                         })}
+                        {hiddenCount > 0 && (
+                            <button
+                                className="w-full text-xs text-center text-muted-foreground py-2 hover:text-foreground transition-colors border-t mt-1"
+                                onClick={() => setShowAll(true)}
+                            >
+                                + {hiddenCount} puntos más — Ver todos
+                            </button>
+                        )}
                     </div>
                 </ScrollArea>
             </CardContent>

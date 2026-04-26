@@ -42,7 +42,8 @@ export const trackingService = {
     const apiFrom = fromDate < todayStart ? from.slice(0, 10) : from
     const apiTo   = toDate   < todayStart ? to.slice(0, 10)   : to
 
-    // Cache solo para rangos completamente en el pasado (resultado inmutable)
+    // Días históricos: inmutables → se sirven desde caché si existen
+    // Hoy: siempre va a la API (datos en tiempo real), pero igual se persiste en IndexedDB
     const isHistorical = toDate < todayStart
     const cacheKey = `tk_${vesselId}_${apiFrom}_${apiTo}`
 
@@ -72,10 +73,8 @@ export const trackingService = {
       page++
     } while (page <= lastPage)
 
-    if (isHistorical) {
-      // Guardar en IndexedDB (capacidad mucho mayor que sessionStorage)
-      await trackingCacheService.set(cacheKey, allData)
-    }
+    // Siempre persistir en IndexedDB (históricos: inmutables; hoy: se sobreescribe en cada fetch)
+    trackingCacheService.set(cacheKey, allData).catch(() => { /* fallo silencioso */ })
 
     return allData
   },

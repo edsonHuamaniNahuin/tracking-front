@@ -500,7 +500,8 @@ export function TrackingMap({
         }
 
         const sorted = [...trackings].sort(
-            (a, b) => new Date(a.tracked_at).getTime() - new Date(b.tracked_at).getTime()
+            // tracked_at es "YYYY-MM-DD HH:MM:SS" — comparación lexicográfica evita crear 2N objetos Date
+            (a, b) => (a.tracked_at < b.tracked_at ? -1 : a.tracked_at > b.tracked_at ? 1 : 0)
         )
         sortedTrackingsRef.current = sorted
         lastTrackingIdRef.current  = sorted[sorted.length - 1].id

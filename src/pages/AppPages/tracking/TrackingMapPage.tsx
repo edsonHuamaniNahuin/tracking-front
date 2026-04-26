@@ -160,13 +160,13 @@ export default function TrackingMapPage() {
             setTrackings([])
             return
         }
-        const from = new Date(selectedDay)
-        from.setHours(timeFrom, 0, 0, 0)
-        const to = new Date(selectedDay)
-        to.setHours(timeTo, 59, 59, 999)
+        // Pre-computar límites como timestamps (números) fuera del filter
+        // Date.parse() es más rápido que new Date() dentro del loop
+        const fromMs = new Date(selectedDay).setHours(timeFrom, 0, 0, 0)
+        const toMs = new Date(selectedDay).setHours(timeTo, 59, 59, 999)
         setTrackings(rawDayTrackings.filter(t => {
-            const d = new Date(t.tracked_at)
-            return d >= from && d <= to
+            const ms = Date.parse(t.tracked_at)
+            return ms >= fromMs && ms <= toMs
         }))
     }, [rawDayTrackings, selectedDay, timeFrom, timeTo])
 
