@@ -63,8 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       response => response,
       err => {
         if (err.response?.status === 401) {
-          // En vez de matar la sesión directamente, mostramos el modal
-          triggerExpiredModal()
+          // Ignorar 401 del propio endpoint de refresh — ese error lo maneja
+          // handleRefreshSession() directamente sin necesidad de re-disparar el modal.
+          const url: string = err.config?.url ?? ''
+          if (!url.includes('/auth/refresh')) {
+            triggerExpiredModal()
+          }
         }
         return Promise.reject(err)
       }
