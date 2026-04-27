@@ -63,10 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       response => response,
       err => {
         if (err.response?.status === 401) {
-          // Ignorar 401 del propio endpoint de refresh — ese error lo maneja
-          // handleRefreshSession() directamente sin necesidad de re-disparar el modal.
+          // Ignorar 401 de refresh y logout — esos flujos gestionan el error
+          // directamente (handleRefreshSession / performLogout) y no deben
+          // volver a disparar el modal.
           const url: string = err.config?.url ?? ''
-          if (!url.includes('/auth/refresh')) {
+          if (!url.includes('/auth/refresh') && !url.includes('/auth/logout')) {
             triggerExpiredModal()
           }
         }
