@@ -63,11 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       response => response,
       err => {
         if (err.response?.status === 401) {
-          // Ignorar 401 de refresh y logout — esos flujos gestionan el error
-          // directamente (handleRefreshSession / performLogout) y no deben
-          // volver a disparar el modal.
+          // Ignorar 401 de rutas de auth — esos flujos gestionan el error
+          // directamente y no deben disparar el modal de sesión expirada.
           const url: string = err.config?.url ?? ''
-          if (!url.includes('/auth/refresh') && !url.includes('/auth/logout')) {
+          const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout')
+          if (!isAuthEndpoint) {
             triggerExpiredModal()
           }
         }
@@ -191,8 +191,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await performLogout()
   }
 
+  /** Comprueba si el usuario tiene un rol específico. */
+  function hasRole(role: string): boolean {
+    return user?.roles?.includes(role) ?? false
+  }
+
+  /** Comprueba si el usuario tiene un permiso específico. */
+  function hasPermission(permission: string): boolean {
+    return user?.permissions?.includes(permission) ?? false
+  }
+
   return (
-    <AuthContext.Provider value={{ user, initializing, loading, error, login, logout }}>
+    <AuthContext.Provider value={{ user, initializing, loading, error, login, logout, hasRole, hasPermission }}>
       {children}
 
       {/* Modal de sesión caducada — renderizado aquí para estar siempre disponible */}

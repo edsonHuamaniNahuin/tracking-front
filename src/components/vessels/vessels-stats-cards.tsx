@@ -33,14 +33,14 @@ export function VesselsStatsCards({ metrics, isLoading = false }: VesselsStatsCa
 
     const statsConfig = [
         {
-            title: "Total Embarcaciones",
+            title: "Total Unidades",
             value: metrics.total_vessels,
             description: "Flota total",
             icon: Ship,
             color: "text-blue-600"
         },
         {
-            title: "Embarcaciones Activas",
+            title: "Unidades Activas",
             value: metrics.active_vessels,
             description: "En operación",
             icon: Activity,

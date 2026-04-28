@@ -29,7 +29,7 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader className="relative">
           <CardDescription className="flex items-center gap-1.5">
-            <Ship className="h-3.5 w-3.5" /> Total Embarcaciones
+            <Ship className="h-3.5 w-3.5" /> Total Unidades
           </CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
             {metrics ? metrics.total_vessels : <Skeleton />}
@@ -80,7 +80,7 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader className="relative">
           <CardDescription className="flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" /> Embarcaciones Activas
+            <Activity className="h-3.5 w-3.5" /> Unidades Activas
           </CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
             {metrics ? metrics.active_vessels : <Skeleton />}
@@ -126,7 +126,7 @@ export function SectionCards() {
         <CardFooter className="flex-col items-start gap-1 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
             {metrics && metrics.vessels_with_alerts > 0
-              ? `${metrics.vessels_with_alerts} embarcaciones con alertas`
+              ? `${metrics.vessels_with_alerts} unidades con alertas`
               : "Sin incidencias activas"}
             <Users className="size-4" />
           </div>

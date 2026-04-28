@@ -3,7 +3,6 @@
 import api from "./api"
 import type { VesselType } from "@/types/models/vesselType"
 import type { VesselTypeSearchRequest } from "@/types/requests/vesselTypeSearchRequest"
-import type { VesselTypePaginatedResponse } from "@/types/pagination/vesselTypePaginatedResponse"
 import type { VesselTypeCreateRequest } from "@/types/requests/vesselTypeCreateRequest"
 import type { VesselTypeCreateResponse } from "@/types/responses/vesselTypeCreateResponse"
 import type { VesselTypeUpdateRequest } from "@/types/requests/vesselTypeUpdateRequest"
@@ -12,15 +11,18 @@ import type { ApiResponse } from "@/types/api"
 
 export const vesselTypeService = {
     /**
-     * GET /vessel-types?page=&per_page=&name?
+     * GET /vessels-types  → array plano VesselType[]
+     * Endpoint liviano usado en formularios (no paginado).
      */
     getTypes: async (
-        params: VesselTypeSearchRequest
-    ): Promise<VesselTypePaginatedResponse> => {
-        const response = await api.get<VesselTypePaginatedResponse>("/vessels-types", {
-            params,
-        })
-        return response.data
+        _params?: VesselTypeSearchRequest
+    ): Promise<VesselType[]> => {
+        const response = await api.get<ApiResponse<VesselType[]> | VesselType[]>("/vessels-types")
+        const payload = response.data as any
+        // Soporta ambas formas: array plano o { data: [...] }
+        if (Array.isArray(payload)) return payload
+        if (payload && Array.isArray(payload.data)) return payload.data
+        return []
     },
 
     /**

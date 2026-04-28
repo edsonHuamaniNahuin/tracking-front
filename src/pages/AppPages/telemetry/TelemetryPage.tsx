@@ -139,18 +139,18 @@ export default function TelemetryPage() {
             {/* ── Selector de embarcación ─────────────────────────────────────────── */}
             <Card>
                 <CardHeader className="pb-4">
-                    <CardTitle className="text-base">Seleccionar Embarcación</CardTitle>
+                    <CardTitle className="text-base">Seleccionar Unidad</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
                         <div className="flex-1 space-y-1.5">
-                            <Label>Embarcación</Label>
+                            <Label>Unidad</Label>
                             <Select
                                 value={selectedVessel?.toString() ?? ""}
                                 onValueChange={v => setSelectedVessel(parseInt(v, 10))}
                             >
                                 <SelectTrigger className="w-full sm:max-w-xs">
-                                    <SelectValue placeholder="Seleccionar embarcación..." />
+                                    <SelectValue placeholder="Seleccionar unidad..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {vessels.map(vessel => (
@@ -184,9 +184,9 @@ export default function TelemetryPage() {
             {!selectedVessel && (
                 <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
                     <Ship className="h-14 w-14 mb-4 opacity-30" />
-                    <p className="text-lg font-medium">Selecciona una embarcación</p>
+                    <p className="text-lg font-medium">Selecciona una unidad</p>
                     <p className="text-sm mt-1">
-                        Elige una embarcación para ver su telemetría en tiempo real.
+                        Elige una unidad para ver su telemetría en tiempo real.
                     </p>
                 </div>
             )}
@@ -247,7 +247,7 @@ export default function TelemetryPage() {
                             <CardContent className="p-0 rounded-b-lg overflow-hidden">
                                 <TelemetryLiveMap
                                     position={position}
-                                    vesselName={selectedVesselData?.name ?? "Embarcación"}
+                                    vesselName={selectedVesselData?.name ?? "Unidad"}
                                     route={route}
                                     height={400}
                                 />

@@ -320,7 +320,7 @@ export default function TrackingMapPage() {
                                 onValueChange={v => setSelectedVessel(parseInt(v, 10))}
                             >
                                 <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Embarcación" />
+                                    <SelectValue placeholder="Unidad" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {vessels.map(vessel => (
@@ -359,19 +359,19 @@ export default function TrackingMapPage() {
 
     // ── NORMAL MODE ──────────────────────────────────────────────────────────
     return (
-        <div className="container mx-auto py-4 space-y-4 px-6">
+        <div className="container mx-auto py-4 space-y-4 px-4 sm:px-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                         <Route className="h-5 w-5" />
                         Mapa de Tracking
                     </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        Rutas y trayectorias de embarcaciones
+                        Rutas y trayectorias de unidades
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {isLive && (
                         <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
                             <span className="relative flex h-2 w-2">
@@ -421,13 +421,13 @@ export default function TrackingMapPage() {
                 <CardContent className="py-3 px-4">
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="space-y-1 min-w-[180px] flex-1">
-                            <Label className="text-xs">Embarcación</Label>
+                            <Label className="text-xs">Unidad</Label>
                             <Select
                                 value={selectedVessel?.toString() ?? ""}
                                 onValueChange={v => setSelectedVessel(parseInt(v, 10))}
                             >
                                 <SelectTrigger className="h-8">
-                                    <SelectValue placeholder="Seleccionar embarcación" />
+                                    <SelectValue placeholder="Seleccionar unidad" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {vessels.map(vessel => (
@@ -572,22 +572,22 @@ export default function TrackingMapPage() {
 
             {/* Embarcación seleccionada — barra compacta */}
             {selectedVesselData && (
-                <div className="flex items-center gap-2 bg-blue-50/60 border border-blue-200 rounded-lg px-3 py-1.5 text-xs">
-                    <Ship className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold text-blue-900">{selectedVesselData.name}</span>
-                    {selectedVesselData.imo && <span className="text-blue-700">IMO: {selectedVesselData.imo}</span>}
+                <div className="flex flex-wrap items-center gap-2 bg-blue-50/60 border border-blue-200 rounded-lg px-3 py-1.5 text-xs">
+                    <Ship className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span className="font-semibold text-blue-900 truncate max-w-[200px]">{selectedVesselData.name}</span>
+                    {selectedVesselData.imo && <span className="text-blue-700 shrink-0">IMO: {selectedVesselData.imo}</span>}
                     {selectedVesselData.vessel_type?.name && (
-                        <Badge variant="outline" className="text-[10px] py-0 text-blue-700 border-blue-300">{selectedVesselData.vessel_type.name}</Badge>
+                        <Badge variant="outline" className="text-[10px] py-0 text-blue-700 border-blue-300 shrink-0">{selectedVesselData.vessel_type.name}</Badge>
                     )}
                     {selectedVesselData.vessel_status?.name && (
-                        <Badge className="text-[10px] py-0 bg-blue-600">{selectedVesselData.vessel_status.name}</Badge>
+                        <Badge className="text-[10px] py-0 bg-blue-600 shrink-0">{selectedVesselData.vessel_status.name}</Badge>
                     )}
-                    <span className="ml-auto text-blue-700">{trackings.length} punto{trackings.length !== 1 ? 's' : ''}</span>
+                    <span className="ml-auto text-blue-700 shrink-0">{trackings.length} punto{trackings.length !== 1 ? 's' : ''}</span>
                 </div>
             )}
 
             {/* Mapa + Panel lateral */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="lg:col-span-2">
                     <Card className="relative">
                         <CardContent className="p-0">

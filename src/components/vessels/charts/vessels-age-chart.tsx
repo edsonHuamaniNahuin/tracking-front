@@ -57,7 +57,7 @@ export function VesselsAgeChart({ data, height = 300, isLoading = false }: Vesse
                                     <div className="flex items-center">
                                         <Ship className="mr-2 h-4 w-4" />
                                         <span className="font-medium">
-                                            {payload[0].payload.name}: {payload[0].value} embarcaciones
+                                            {payload[0].payload.name}: {payload[0].value} unidades
                                         </span>
                                     </div>
                                 </div>

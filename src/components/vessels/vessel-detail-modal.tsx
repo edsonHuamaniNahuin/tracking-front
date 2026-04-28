@@ -30,7 +30,7 @@ export function VesselDetailModal({ vessel, isOpen, onClose }: VesselDetailModal
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Detalles de la Embarcación</DialogTitle>
+                    <DialogTitle>Detalles de la Unidad</DialogTitle>
                 </DialogHeader>
 
                 <Card>

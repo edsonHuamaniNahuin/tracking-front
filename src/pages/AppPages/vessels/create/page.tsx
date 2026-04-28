@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Ship, Upload, Loader2 } from "lucide-react"
@@ -26,6 +26,7 @@ export default function VesselCreatePage() {
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null)
   const [vesselTypes, setVesselTypes] = useState<VesselType[]>([])
   const [vesselStatuses, setVesselStatuses] = useState<VesselStatus[]>([])
+  const [category, setCategory] = useState<"" | "maritime" | "terrestrial">("")
   const [form, setForm] = useState({
     name: "",
     imo: "",
@@ -43,8 +44,8 @@ export default function VesselCreatePage() {
   const [preview, setPreview] = useState<string | null>(null)
 
   useEffect(() => {
-    vesselTypeService.getTypes({ page: 1, per_page: 100 })
-      .then(r => setVesselTypes(r.data))
+    vesselTypeService.getTypes()
+      .then(types => setVesselTypes(types))
     vesselStatusService.getStatuses({ page: 1, per_page: 100 })
       .then(r => setVesselStatuses(r.data))
   }, [])
@@ -128,14 +129,14 @@ export default function VesselCreatePage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-3xl font-bold ml-2 flex items-center">
-          <Ship className="mr-2" /> Nueva Embarcación
+          <Ship className="mr-2" /> Nueva Unidad
         </h1>
       </div>
 
       {/* Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Datos de la embarcación</CardTitle>
+          <CardTitle>Datos de la unidad</CardTitle>
           <CardDescription>Completa el formulario</CardDescription>
         </CardHeader>
         <CardContent>
@@ -167,22 +168,46 @@ export default function VesselCreatePage() {
                 {errors.imo && <p className="text-destructive">{errors.imo}</p>}
               </div>
 
-              {/* Tipo */}
+              {/* Categoría (paso 1) */}
+              <div>
+                <Label htmlFor="category">Categoría</Label>
+                <Select
+                  value={category}
+                  onValueChange={(v: "maritime" | "terrestrial") => {
+                    setCategory(v)
+                    // resetear el tipo al cambiar de categoría
+                    setForm(f => ({ ...f, vesselTypeId: "" }))
+                    setErrors(err => ({ ...err, vesselTypeId: null }))
+                  }}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Selecciona categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="maritime">🚢 Marítimo</SelectItem>
+                    <SelectItem value="terrestrial">🚐 Terrestre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tipo (paso 2 — depende de categoría) */}
               <div>
                 <Label htmlFor="vesselTypeId">Tipo</Label>
                 <Select
                   value={form.vesselTypeId}
                   onValueChange={v => handleSelectChange("vesselTypeId", v)}
+                  disabled={!category}
                 >
                   <SelectTrigger id="vesselTypeId" className={errors.vesselTypeId ? "border-destructive" : ""}>
-                    <SelectValue placeholder="Selecciona" />
+                    <SelectValue placeholder={category ? "Selecciona tipo" : "Elige categoría primero"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {vesselTypes.map(t => (
-                      <SelectItem key={t.id} value={t.id.toString()}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
+                    {vesselTypes
+                      .filter(t => (t.category ?? 'maritime') === category)
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(t => (
+                        <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 {errors.vesselTypeId && <p className="text-destructive">{errors.vesselTypeId}</p>}

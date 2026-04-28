@@ -20,7 +20,7 @@ interface TelemetryLiveMapProps {
  */
 export function TelemetryLiveMap({
     position,
-    vesselName = "Embarcación",
+    vesselName = "Unidad",
     route,
     height = 420,
 }: TelemetryLiveMapProps) {

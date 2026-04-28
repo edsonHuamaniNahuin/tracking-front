@@ -270,7 +270,7 @@ export function LeafletMap({ data, height = 400, isLoading = false }: LeafletMap
                         variant="outline"
                         onClick={fitBounds}
                         className="bg-background/95 backdrop-blur-sm hover:bg-background"
-                        title="Ajustar vista a todas las embarcaciones"
+                        title="Ajustar vista a todas las unidades"
                     >
                         <Navigation className="h-4 w-4" />
                     </Button>
@@ -284,7 +284,7 @@ export function LeafletMap({ data, height = 400, isLoading = false }: LeafletMap
                     Flota Activa
                 </div>
                 <div className="text-xs text-muted-foreground">
-                    {safeData.length > 0 ? `${safeData.length} embarcaciones` : "5 embarcaciones de demostración"}
+                    {safeData.length > 0 ? `${safeData.length} unidades` : "5 unidades de demostración"}
                 </div>
                 {safeData.length === 0 && (
                     <div className="text-xs text-yellow-600 mt-1">

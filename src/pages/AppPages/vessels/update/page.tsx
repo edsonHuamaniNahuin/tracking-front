@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-    Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+    Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +38,7 @@ export default function VesselUpdatePage() {
     const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null)
     const [vesselTypes, setVesselTypes] = useState<VesselType[]>([])
     const [vesselStatuses, setVesselStatuses] = useState<VesselStatus[]>([])
+    const [category, setCategory] = useState<"" | "maritime" | "terrestrial">("")
     const [form, setForm] = useState({
         name: "",
         imo: "",
@@ -173,17 +174,20 @@ export default function VesselUpdatePage() {
     useEffect(() => {
         (async () => {
             try {
-                const [typesRes, statusesRes, vesselRes] = await Promise.all([
-                    vesselTypeService.getTypes({ page: 1, per_page: 100 }),
+                const [typesArr, statusesRes, vesselRes] = await Promise.all([
+                    vesselTypeService.getTypes(),
                     vesselStatusService.getStatuses({ page: 1, per_page: 100 }),
                     vesselService.getVessel(vesselId),
                 ])
-                setVesselTypes(typesRes.data)
+                setVesselTypes(typesArr)
                 setVesselStatuses(statusesRes.data)
                 const v = vesselRes.data
                 // Validar vessel_type y vessel_status
-                const vesselTypeId = v.vessel_type && v.vessel_type.id ? v.vessel_type.id.toString() : (typesRes.data[0]?.id?.toString() || "")
+                const vesselTypeId = v.vessel_type && v.vessel_type.id ? v.vessel_type.id.toString() : (typesArr[0]?.id?.toString() || "")
                 const vesselStatusId = v.vessel_status && v.vessel_status.id ? v.vessel_status.id.toString() : (statusesRes.data[0]?.id?.toString() || "")
+                // Inferir categoría desde el tipo seleccionado
+                const selectedType = typesArr.find(t => t.id.toString() === vesselTypeId)
+                setCategory((selectedType?.category ?? 'maritime') as "maritime" | "terrestrial")
                 setForm({
                     name: v.name,
                     imo: v.imo || "",
@@ -270,13 +274,13 @@ export default function VesselUpdatePage() {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <h1 className="text-3xl font-bold ml-2 flex items-center">
-                    <Ship className="mr-2" /> Editar Embarcación
+                    <Ship className="mr-2" /> Editar Unidad
                 </h1>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Datos de la embarcación</CardTitle>
+                    <CardTitle>Datos de la unidad</CardTitle>
                     <CardDescription>Modifica y guarda los cambios</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -311,20 +315,43 @@ export default function VesselUpdatePage() {
 
                             {/* Vessel Type */}
                             <div className="space-y-2">
+                                <Label htmlFor="category">Categoría</Label>
+                                <Select
+                                    value={category}
+                                    onValueChange={(v: "maritime" | "terrestrial") => {
+                                        setCategory(v)
+                                        setForm(f => ({ ...f, vesselTypeId: "" }))
+                                        setErrors(err => ({ ...err, vesselTypeId: "" }))
+                                    }}
+                                >
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Selecciona categoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="maritime">🚢 Marítimo</SelectItem>
+                                        <SelectItem value="terrestrial">🚠 Terrestre</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Tipo (paso 2) */}
+                            <div className="space-y-2">
                                 <Label htmlFor="vesselType">Tipo</Label>
                                 <Select
                                     value={form.vesselTypeId}
                                     onValueChange={(v) => handleSelect("vesselTypeId", v)}
+                                    disabled={!category}
                                 >
                                     <SelectTrigger id="vesselType">
-                                        <SelectValue placeholder="Selecciona un tipo" />
+                                        <SelectValue placeholder={category ? "Selecciona un tipo" : "Elige categoría primero"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {vesselTypes.map((t) => (
-                                            <SelectItem key={t.id} value={t.id.toString()}>
-                                                {t.name}
-                                            </SelectItem>
-                                        ))}
+                                        {vesselTypes
+                                            .filter(t => (t.category ?? 'maritime') === category)
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map((t) => (
+                                                <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                                            ))}
                                     </SelectContent>
                                 </Select>
                                 {errors.vesselTypeId && <p className="text-sm text-destructive">{errors.vesselTypeId}</p>}
@@ -737,7 +764,7 @@ Content-Type: application/json
                                     <span className="font-mono text-xs">{deviceStatus?.send_interval ?? 10}s</span>
                                 </div>
                                 <div className="flex justify-between items-center bg-muted/50 rounded px-3 py-1.5">
-                                    <span className="text-muted-foreground text-xs">Embarcación</span>
+                                    <span className="text-muted-foreground text-xs">Unidad</span>
                                     <span className="font-mono text-xs">{form.name || '—'}</span>
                                 </div>
                             </div>

@@ -29,7 +29,7 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
 
     if (isLoading) {
         return (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -81,7 +81,7 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
     }
 
     return (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -100,7 +100,7 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
                     {vessels.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                No se encontraron embarcaciones
+                                No se encontraron unidades
                             </TableCell>
                         </TableRow>
                     ) : (

@@ -32,7 +32,7 @@ export function VesselsMapChart({ data, height = 400, isLoading = false }: Vesse
             <div className="flex items-center justify-center" style={{ height }}>
                 <div className="text-center text-sm text-muted-foreground">
                     <MapPin className="mx-auto h-8 w-8 mb-2" />
-                    <p>No hay posiciones de embarcaciones disponibles</p>
+                    <p>No hay posiciones de unidades disponibles</p>
                 </div>
             </div>
         )
@@ -135,7 +135,7 @@ export function VesselsMapChart({ data, height = 400, isLoading = false }: Vesse
 
             {/* Leyenda */}
             <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
-                <div className="text-sm font-medium mb-2">Tipos de embarcaciones</div>
+                <div className="text-sm font-medium mb-2">Tipos de unidades</div>
                 <div className="space-y-1">
                     <div className="flex items-center">
                         <Ship className="h-4 w-4 text-blue-600 mr-2" />
@@ -174,7 +174,7 @@ export function VesselsMapChart({ data, height = 400, isLoading = false }: Vesse
             {/* Información adicional */}
             <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
                 <div className="text-sm font-medium">Posiciones de Flota</div>
-                <div className="text-xs text-muted-foreground">{data.length} embarcaciones</div>
+                <div className="text-xs text-muted-foreground">{data.length} unidades</div>
             </div>
         </div>
     )

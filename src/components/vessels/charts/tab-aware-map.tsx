@@ -217,7 +217,7 @@ export function TabAwareMap({ data, height = 400 }: TabAwareMapProps) {
 
             mapInstanceRef.current = map
             setMapReady(true)
-            setMapStatus(`✅ ${validVessels.length} embarcaciones cargadas`)
+            setMapStatus(`✅ ${validVessels.length} unidades cargadas`)
 
             // Redimensionados finales
             setTimeout(() => map.invalidateSize(true), 100)

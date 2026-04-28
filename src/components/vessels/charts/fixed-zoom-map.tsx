@@ -286,7 +286,7 @@ export function FixedZoomMap({ data, height = 400 }: FixedZoomMapProps) {
             {/* Info de embarcaciones */}
             <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg border z-[1000]">
                 <div className="text-xs text-gray-600">
-                    📍 {Array.isArray(data) ? data.length : 0} embarcaciones
+                    📍 {Array.isArray(data) ? data.length : 0} unidades
                 </div>
                 <div className="text-xs text-blue-600 mt-1">
                     ✓ Vista mundial optimizada

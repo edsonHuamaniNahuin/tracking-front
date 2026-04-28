@@ -261,7 +261,7 @@ export function TrackingMap({
             map.on('zoomend moveend', debouncedRender)
 
             setIsReady(true)
-            setMapStatus("Mapa listo — selecciona una embarcación")
+            setMapStatus("Mapa listo — selecciona una unidad")
 
             setTimeout(() => map.invalidateSize(), 100)
             setTimeout(() => map.invalidateSize(), 400)
@@ -657,7 +657,7 @@ export function TrackingMap({
                     {showAllVessels && (
                         <div className="flex items-center gap-2 text-xs text-gray-600">
                             <div className="w-3 h-3 bg-emerald-500 rounded-full border border-white shadow shrink-0" />
-                            Otras embarcaciones
+                            Otras unidades
                         </div>
                     )}
                 </div>

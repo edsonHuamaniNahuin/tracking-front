@@ -32,12 +32,15 @@ const HomePage      = lazy(() => import('@/pages/HomePage'))
 const DashboardPage = lazy(() => import('@/pages/AppPages/DashboardPage'))
 const UserProfilePage = lazy(() => import('@/pages/AppPages/UserProfilePage'))
 
-// ── Páginas privadas — Embarcaciones ─────────────────────────────────────────
+// ── Páginas privadas — Unidades ─────────────────────────────────────────
 const VesselsPage      = lazy(() => import('@/pages/AppPages/vessels/VesselsPage'))
 const VesselsChartsPage = lazy(() => import('@/pages/AppPages/vessels/VesselsChartsPage'))
 const VesselCreatePage = lazy(() => import('@/pages/AppPages/vessels/create/page'))
 const VesselUpdatePage = lazy(() => import('@/pages/AppPages/vessels/update/page'))
 const VesselViewPage   = lazy(() => import('@/pages/AppPages/vessels/view/page'))
+
+// ── Páginas privadas — Flotas ──────────────────────────────────────────────
+const FleetManagementPage = lazy(() => import('@/pages/AppPages/fleets/FleetManagementPage'))
 
 // ── Páginas privadas — Tracking ───────────────────────────────────────────────
 const TrackingMapPage = lazy(() => import('@/pages/AppPages/tracking/TrackingMapPage'))
@@ -50,6 +53,9 @@ const DeviceLogsPage = lazy(() => import('@/pages/AppPages/device/DeviceLogsPage
 
 // ── Páginas privadas — Configuración ──────────────────────────────────────────
 const SettingsPage = lazy(() => import('@/pages/AppPages/SettingsPage'))
+
+// ── Páginas privadas — Roles y Permisos ───────────────────────────────────────
+const RolesPage = lazy(() => import('@/pages/AppPages/roles/RolesPage'))
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -71,12 +77,20 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/user"      element={<UserProfilePage />} />
 
-            {/* Embarcaciones */}
+            {/* Unidades */}
             <Route path="/vessels"              element={<VesselsPage />} />
             <Route path="/vessels/charts"       element={<VesselsChartsPage />} />
             <Route path="/vessels/create"       element={<VesselCreatePage />} />
             <Route path="/vessels/:id/edit"     element={<VesselUpdatePage />} />
             <Route path="/vessels/:id"          element={<VesselViewPage />} />
+
+            {/* Alias /unidades → /vessels */}
+            <Route path="/unidades"             element={<Navigate to="/vessels" replace />} />
+            <Route path="/unidades/charts"      element={<Navigate to="/vessels/charts" replace />} />
+            <Route path="/unidades/create"      element={<Navigate to="/vessels/create" replace />} />
+
+            {/* Flotas */}
+            <Route path="/fleets" element={<FleetManagementPage />} />
 
             {/* Tracking */}
             <Route path="/tracking/map" element={<TrackingMapPage />} />
@@ -89,6 +103,9 @@ export default function AppRoutes() {
 
             {/* Configuración */}
             <Route path="/settings" element={<SettingsPage />} />
+
+            {/* Roles y Permisos */}
+            <Route path="/roles" element={<RolesPage />} />
 
           </Route>
         </Route>

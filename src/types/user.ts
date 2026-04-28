@@ -15,6 +15,8 @@ export interface User {
   two_factor_enabled: boolean;
   email_notifications_enabled: boolean;
   push_notifications_enabled: boolean;
+  roles: string[];
+  permissions: string[];
   created_at?: string;
   updated_at?: string;
 }

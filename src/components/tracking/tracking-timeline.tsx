@@ -165,7 +165,7 @@ export function TrackingTimeline({
                 <CardContent className="text-center py-8">
                     <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">
-                        Selecciona una embarcación y un rango de fechas para ver el historial
+                        Selecciona una unidad y un rango de fechas para ver el historial
                     </p>
                 </CardContent>
             </Card>

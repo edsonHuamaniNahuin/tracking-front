@@ -71,7 +71,7 @@ export default function VesselsPage() {
                 setError(null)
             } catch (err) {
                 console.error(err)
-                setError("Error al cargar las embarcaciones desde el servidor")
+                setError("Error al cargar las unidades desde el servidor")
             } finally {
                 setIsLoading(false)
             }
@@ -142,14 +142,14 @@ export default function VesselsPage() {
         setIsLoading(true)
         try {
             await vesselService.deleteVessel(vesselToDelete.id)
-            showNotification("Embarcación eliminada exitosamente", "success")
+            showNotification("Unidad eliminada exitosamente", "success")
             // Cargar la misma página de nuevo:
             loadVessels(currentPage, itemsPerPage, nameFilter, imoFilter)
             setIsConfirmDialogOpen(false)
             setVesselToDelete(null)
         } catch (err) {
             console.error(err)
-            showNotification("Error al eliminar la embarcación", "error")
+            showNotification("Error al eliminar la unidad", "error")
         } finally {
             setIsLoading(false)
         }
@@ -195,19 +195,19 @@ export default function VesselsPage() {
     // ─────────────────────────────────────────────────
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <div className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
             {/* ✴ Error Banner */}
             {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 
             {/* ✴ Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Embarcaciones</h1>
-                    <p className="text-muted-foreground">Gestiona tu flota de embarcaciones</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Unidades</h1>
+                    <p className="text-muted-foreground">Gestiona tus unidades</p>
                 </div>
-                <Button onClick={() => navigate("/vessels/create")}>
+                <Button className="w-full sm:w-auto" onClick={() => navigate("/vessels/create")}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Nueva Embarcación
+                    Nueva Unidad
                 </Button>
             </div>
 

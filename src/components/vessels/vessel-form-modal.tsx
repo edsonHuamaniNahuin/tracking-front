@@ -66,7 +66,7 @@ export function VesselFormModal({ vessel, isOpen, onClose, onSave }: VesselFormM
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{vessel ? "Editar Embarcación" : "Nueva Embarcación"}</DialogTitle>
+                    <DialogTitle>{vessel ? "Editar Unidad" : "Nueva Unidad"}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +74,7 @@ export function VesselFormModal({ vessel, isOpen, onClose, onSave }: VesselFormM
                         <Label htmlFor="name">Nombre</Label>
                         <Input
                             id="name"
-                            placeholder="Ingresa el nombre de la embarcación"
+                            placeholder="Ingresa el nombre de la unidad"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className={errors.name ? "border-destructive" : ""}

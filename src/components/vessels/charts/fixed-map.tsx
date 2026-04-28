@@ -268,11 +268,11 @@ export function FixedMap({ data, height = 400 }: FixedMapProps) {
                     const group = L.featureGroup(markers)
                     map.fitBounds(group.getBounds(), { padding: [20, 20] })
 
-                    setMapStatus(`✅ Mapa cargado: ${validVessels.length} embarcaciones`)
+                    setMapStatus(`✅ Mapa cargado: ${validVessels.length} unidades`)
                 } else {
                     // Si no hay datos válidos, centrar en una vista global
                     map.setView([20, 0], 2)
-                    setMapStatus("⚠️ No hay datos de embarcaciones válidos")
+                    setMapStatus("⚠️ No hay datos de unidades válidos")
                 }
 
                 mapInstanceRef.current = map

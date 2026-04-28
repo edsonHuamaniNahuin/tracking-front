@@ -202,7 +202,7 @@ export function TrackingStats({ trackings, vessel, isLoading = false }: Tracking
                 <CardContent className="text-center py-8">
                     <Ship className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">
-                        Selecciona una embarcación para ver las estadísticas
+                        Selecciona una unidad para ver las estadísticas
                     </p>
                 </CardContent>
             </Card>

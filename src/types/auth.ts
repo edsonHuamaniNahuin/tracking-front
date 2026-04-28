@@ -22,4 +22,6 @@ export interface AuthContextResponse {
   initializing: boolean;
   login: (request: LoginRequest) => Promise<void>
   logout: () => void
+  hasRole: (role: string) => boolean
+  hasPermission: (permission: string) => boolean
 }

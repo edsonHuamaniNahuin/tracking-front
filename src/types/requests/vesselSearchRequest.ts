@@ -4,4 +4,5 @@ export interface VesselSearchRequest {
     per_page: number
     name?: string
     imo?: string
+    own_only?: boolean
 }

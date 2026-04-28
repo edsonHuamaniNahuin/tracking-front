@@ -49,7 +49,7 @@ export default function VesselViewPage() {
         return <div className="container mx-auto py-6 text-center"><Loader2 className="animate-spin h-6 w-6" /></div>
     }
     if (!vessel) {
-        return <div className="container mx-auto py-6">No se encontró la embarcación</div>
+        return <div className="container mx-auto py-6">No se encontró la unidad</div>
     }
 
     const fmt = (s: string) => formatDateTimeMedium(s)
@@ -95,7 +95,7 @@ export default function VesselViewPage() {
                 isOpen={confirmOpen}
                 onClose={() => setConfirmOpen(false)}
                 onConfirm={onDelete}
-                title="Eliminar Embarcación"
+                title="Eliminar Unidad"
                 description={`¿Seguro de eliminar "${vessel.name}"?`}
             />
 

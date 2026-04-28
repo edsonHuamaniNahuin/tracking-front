@@ -74,7 +74,7 @@ export default function VesselsChartsPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center">
                         <Ship className="mr-2 h-6 w-6" />
-                        Dashboard de Embarcaciones
+                        Dashboard de Unidades
                     </h1>
                     <p className="text-muted-foreground">Análisis y estadísticas de tu flota</p>
                 </div>
@@ -163,7 +163,7 @@ export default function VesselsChartsPage() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <div className="space-y-0.5">
-                                    <CardTitle className="text-base">Embarcaciones por Tipo</CardTitle>
+                                    <CardTitle className="text-base">Unidades por Tipo</CardTitle>
                                     <CardDescription>Distribución de la flota por categoría</CardDescription>
                                 </div>
                                 <Ship className="h-4 w-4 text-muted-foreground" />
@@ -178,7 +178,7 @@ export default function VesselsChartsPage() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <div className="space-y-0.5">
-                                    <CardTitle className="text-base">Estado de Embarcaciones</CardTitle>
+                                    <CardTitle className="text-base">Estado de Unidades</CardTitle>
                                     <CardDescription>Distribución por estado operativo</CardDescription>
                                 </div>
                                 <Ship className="h-4 w-4 text-muted-foreground" />
@@ -196,7 +196,7 @@ export default function VesselsChartsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div className="space-y-0.5">
-                                <CardTitle className="text-base">Actividad de Embarcaciones</CardTitle>
+                                <CardTitle className="text-base">Actividad de Unidades</CardTitle>
                                 <CardDescription>Viajes registrados en el último período</CardDescription>
                             </div>
                             <LineChart className="h-4 w-4 text-muted-foreground" />
@@ -244,7 +244,7 @@ export default function VesselsChartsPage() {
                 <TabsContent value="types">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Embarcaciones por Tipo</CardTitle>
+                            <CardTitle>Unidades por Tipo</CardTitle>
                             <CardDescription>
                                 Análisis detallado de la distribución de tu flota por categoría y subcategoría
                             </CardDescription>
@@ -262,7 +262,7 @@ export default function VesselsChartsPage() {
                 <TabsContent value="activity">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Actividad de Embarcaciones</CardTitle>
+                            <CardTitle>Actividad de Unidades</CardTitle>
                             <CardDescription>Seguimiento de viajes y operaciones a lo largo del tiempo</CardDescription>
                         </CardHeader>
                         <CardContent className="pt-6">
@@ -279,8 +279,8 @@ export default function VesselsChartsPage() {
                 <TabsContent value="status">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Estado de Embarcaciones</CardTitle>
-                            <CardDescription>Distribución actual de embarcaciones por estado operativo</CardDescription>
+                            <CardTitle>Estado de Unidades</CardTitle>
+                            <CardDescription>Distribución actual de unidades por estado operativo</CardDescription>
                         </CardHeader>                        <CardContent className="pt-6">
                             <VesselsStatusChart
                                 data={dashboardData?.vessels_by_status || []}

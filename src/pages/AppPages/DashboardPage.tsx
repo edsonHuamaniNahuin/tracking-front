@@ -244,7 +244,7 @@ export default function DashboardPage() {
                 className="mt-1"
                 onClick={() => navigate('/vessels')}
               >
-                Ir a gestiÃ³n de embarcaciones
+                Ir a gestión de unidades
               </Button>
             </div>
           )}
