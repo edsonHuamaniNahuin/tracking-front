@@ -7,8 +7,18 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # Se configura VITE_API_URL en Netlify Dashboard:
-  # Site → Environment variables → VITE_API_URL = https://api.nautic.run/api/v1
+  # Variables de entorno requeridas en Netlify Dashboard:
+  # Site → Environment variables → agregar todas las siguientes:
+  #
+  # VITE_API_URL          = https://api.nautic.run/api/v1
+  #
+  # VITE_REVERB_APP_KEY   = <valor de REVERB_APP_KEY en el .env del backend>
+  # VITE_REVERB_HOST      = api.nautic.run
+  # VITE_REVERB_PORT      = 443
+  # VITE_REVERB_SCHEME    = https
+  #
+  # Las vars VITE_REVERB_* son necesarias para el modo Live (WebSocket).
+  # Sin ellas el modo Live queda inactivo pero el resto de la app funciona.
 
 # ── Seguridad: cabeceras globales ─────────────────────────────────────────────
 [[headers]]

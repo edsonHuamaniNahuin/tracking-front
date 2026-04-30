@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TrackingMap } from "@/components/tracking/tracking-map"
 import { TrackingTimeline } from "@/components/tracking/tracking-timeline"
 import { TrackingStats } from "@/components/tracking/tracking-stats"
-import { useLiveTracking } from "@/hooks/useLiveTracking"
+import { useTrackingSocket } from "@/hooks/useTrackingSocket"
 import {
     Ship,
     MapPin,
@@ -24,6 +24,7 @@ import {
     PanelRightClose,
     Radio,
     WifiOff,
+    Wifi,
     CalendarIcon,
     Clock,
 } from "lucide-react"
@@ -172,27 +173,47 @@ export default function TrackingMapPage() {
 
     const selectedVesselData = vessels.find(v => v.id === selectedVessel)
 
-    // ── Live refresh silencioso ───────────────────────────────────────────────
-    // No toca isLoading ni selectedTracking: el mapa/stats/timeline no parpadean
-    const liveRefresh = useCallback(async () => {
-        if (!selectedVessel) return
-        if (!isSameDay(selectedDay, new Date())) return  // live solo tiene sentido para hoy
-        try {
-            const dayStr = format(selectedDay, 'yyyy-MM-dd')
-            const to     = format(new Date(), 'yyyy-MM-dd HH:mm:59')
-            const data   = await trackingService.getTrackings(selectedVessel, `${dayStr} 00:00:00`, to)
-            if (Array.isArray(data)) setRawDayTrackings(data)
-        } catch { /* fallo silencioso — no interrumpir la vista live */ }
-    }, [selectedVessel, selectedDay])
+    // ── Estado Live ──────────────────────────────────────────────────────────
+    const [isLive, setIsLive] = useState(false)
 
-    const { isLive, toggle: toggleLive, countdown } = useLiveTracking({
-        onTick: liveRefresh,
-        intervalMs: 15_000,
+    // ── WebSocket: suscripción al canal privado de la embarcación ─────────────
+    // Cuando el backend guarda un nuevo Tracking lo emite vía Reverb y el
+    // hook lo recibe sin necesidad de polling HTTP.
+    const handleNewTracking = useCallback((data: Partial<import('@/types/tracking').Tracking>) => {
+        // Solo agregamos si es para el día de hoy (Live siempre es hoy)
+        if (!isSameDay(selectedDay, new Date())) return
+        setRawDayTrackings(prev => {
+            // Evitar duplicados (Reverb puede entregar el mismo evento dos veces)
+            if (prev.some(t => t.id === data.id)) return prev
+            // El payload del evento sólo tiene campos básicos (sin vessel anidado).
+            // Completamos con el objeto vessel que ya tenemos en memoria.
+            const vessel = vessels.find(v => v.id === (data.vessel_id ?? selectedVessel))
+            const full = {
+                ...data,
+                // Normalizar latitude/longitude a string para que coincida con el tipo
+                latitude:  String(data.latitude  ?? ''),
+                longitude: String(data.longitude ?? ''),
+                // Si no tenemos el vessel anidado usamos el del primer elemento existente
+                vessel: (vessel as unknown as import('@/types/tracking').TrackingVessel) ?? prev[0]?.vessel,
+                updated_at:  data.created_at ?? '',
+                deleted_at:  null,
+            } as import('@/types/tracking').Tracking
+            // Insertar ordenado por tracked_at descendente (el más reciente primero)
+            return [full, ...prev].sort(
+                (a, b) => Date.parse(b.tracked_at) - Date.parse(a.tracked_at)
+            )
+        })
+    }, [selectedDay, selectedVessel, vessels])
+
+    const { isConnected: wsConnected } = useTrackingSocket({
+        vesselId: selectedVessel,
+        enabled:  isLive,
+        onNewTracking: handleNewTracking,
     })
 
     // ── Activar Live con validación de dispositivo online ────────────────────
     const handleLiveToggle = useCallback(async () => {
-        if (isLive) { toggleLive(); return }
+        if (isLive) { setIsLive(false); return }
         if (!selectedVessel) return
         setDeviceOfflineMsg(null)
         setIsCheckingDevice(true)
@@ -202,7 +223,7 @@ export default function TrackingMapPage() {
                 setSelectedDay(startOfDay(new Date()))
                 setTimeFrom(0)
                 setTimeTo(23)
-                toggleLive()
+                setIsLive(true)
             } else {
                 const lastSeen = status.last_seen_at
                     ? `Última señal: ${new Date(status.last_seen_at).toLocaleString('es-PE')}`
@@ -214,7 +235,7 @@ export default function TrackingMapPage() {
         } finally {
             setIsCheckingDevice(false)
         }
-    }, [isLive, selectedVessel, toggleLive])
+    }, [isLive, selectedVessel])
 
     // ── Días con datos → convertidos a Date[] para react-day-picker modifiers ──
     // useMemo evita recrear el array en cada render
@@ -269,12 +290,12 @@ export default function TrackingMapPage() {
 
                     {/* Indicador LIVE flotante */}
                     {isLive && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-1 rounded-full shadow ${wsConnected ? 'bg-emerald-600' : 'bg-amber-500'}`}>
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
                             </span>
-                            LIVE · {countdown}s
+                            {wsConnected ? 'LIVE · conectado' : 'LIVE · conectando…'}
                         </div>
                     )}
 
@@ -373,12 +394,15 @@ export default function TrackingMapPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     {isLive && (
-                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                        <div className={`flex items-center gap-1.5 text-xs font-medium ${wsConnected ? 'text-emerald-600' : 'text-amber-600'}`}>
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: wsConnected ? '#34d399' : '#f59e0b' }} />
+                                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: wsConnected ? '#10b981' : '#f59e0b' }} />
                             </span>
-                            LIVE · {countdown}s
+                            {wsConnected
+                                ? <><Wifi className="h-3 w-3" /> LIVE · conectado</>
+                                : <>LIVE · conectando&hellip;</>
+                            }
                         </div>
                     )}
                     <Button
@@ -386,7 +410,7 @@ export default function TrackingMapPage() {
                         size="sm"
                         onClick={handleLiveToggle}
                         disabled={!selectedVessel || isCheckingDevice}
-                        title={isLive ? 'Detener modo live' : 'Activar modo live (refresco automático cada 15 s)'}
+                        title={isLive ? 'Detener modo live' : 'Activar modo live (WebSocket en tiempo real)'}
                     >
                         {isCheckingDevice
                             ? <><RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />Verificando...</>
