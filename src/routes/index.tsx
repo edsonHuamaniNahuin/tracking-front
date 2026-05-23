@@ -31,6 +31,7 @@ const SignIn = lazy(() => import('@/pages/AuthPages/PageSignIn'))
 const HomePage      = lazy(() => import('@/pages/HomePage'))
 const DashboardPage = lazy(() => import('@/pages/AppPages/DashboardPage'))
 const UserProfilePage = lazy(() => import('@/pages/AppPages/UserProfilePage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 // ── Páginas privadas — Unidades ─────────────────────────────────────────
 const VesselsPage      = lazy(() => import('@/pages/AppPages/vessels/VesselsPage'))
@@ -107,11 +108,13 @@ export default function AppRoutes() {
             {/* Roles y Permisos */}
             <Route path="/roles" element={<RolesPage />} />
 
+            {/* 404 dentro del layout (sidebar visible) */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>
 
-        {/* Fallback — cualquier ruta desconocida va al dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* 404 fuera del layout (sin sidebar, ej. sin autenticar) */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )
