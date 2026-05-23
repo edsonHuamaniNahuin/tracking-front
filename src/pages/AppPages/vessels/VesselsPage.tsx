@@ -195,7 +195,7 @@ export default function VesselsPage() {
     // ─────────────────────────────────────────────────
 
     return (
-        <div className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
+        <div className="flex flex-1 flex-col gap-4 py-4 px-4 lg:px-6">
             {/* ✴ Error Banner */}
             {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 

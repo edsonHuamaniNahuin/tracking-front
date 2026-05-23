@@ -39,6 +39,7 @@ export const LoginForm: FC<LoginFieldsProps> = ({
           id="email"
           type="email"
           required
+          autoComplete="username"
           value={email}
           onChange={(e) => onEmailChange(e.currentTarget.value)}
         />

@@ -49,18 +49,18 @@ export function PaginationControls({
 
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
                 Mostrando {from} a {to} de {totalItems} resultados
             </p>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1 flex-wrap justify-center">
                 {/* Primera página */}
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onPageChange(1)}
                     disabled={currentPage === 1 || isLoading}
-                    className="hidden sm:flex"
+                    className="hidden lg:flex"
                 >
                     <ChevronsLeft className="h-4 w-4" />
                 </Button>
@@ -72,12 +72,12 @@ export function PaginationControls({
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1 || isLoading}
                 >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Anterior
+                    <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Anterior</span>
                 </Button>
 
                 {/* Números de página */}
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center gap-1">
                     {getPageNumbers().map((page) => (
                         <Button
                             key={page}
@@ -89,7 +89,7 @@ export function PaginationControls({
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-10"
+                            className="w-8 h-8 sm:w-10"
                         >
                             {page}
                         </Button>
@@ -103,8 +103,8 @@ export function PaginationControls({
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages || isLoading}
                 >
-                    Siguiente
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
                 </Button>
 
                 {/* Última página */}
@@ -113,7 +113,7 @@ export function PaginationControls({
                     size="sm"
                     onClick={() => onPageChange(totalPages)}
                     disabled={currentPage === totalPages || isLoading}
-                    className="hidden sm:flex"
+                    className="hidden lg:flex"
                 >
                     <ChevronsRight className="h-4 w-4" />
                 </Button>

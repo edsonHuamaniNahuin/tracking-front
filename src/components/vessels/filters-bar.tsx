@@ -56,9 +56,9 @@ export function FiltersBar({
     }, [localImo])
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
+        <div className="flex flex-wrap gap-3 items-end">
             {/* INPUT para filtrar por name */}
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative w-full sm:flex-1 sm:min-w-[180px] sm:max-w-[240px]">
                 <Input
                     placeholder="Buscar por nombre"
                     value={localName}
@@ -69,7 +69,7 @@ export function FiltersBar({
             </div>
 
             {/* INPUT para filtrar por IMO */}
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative w-full sm:flex-1 sm:min-w-[140px] sm:max-w-[200px]">
                 <Input
                     placeholder="Buscar por IMO"
                     value={localImo}

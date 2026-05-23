@@ -68,9 +68,9 @@ export default function VesselsChartsPage() {
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6 px-6">
+        <div className="flex flex-1 flex-col gap-4 py-4 px-4 lg:px-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center">
                         <Ship className="mr-2 h-6 w-6" />
@@ -79,11 +79,11 @@ export default function VesselsChartsPage() {
                     <p className="text-muted-foreground">Análisis y estadísticas de tu flota</p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
+                            <Button variant="outline" className="w-full sm:w-[200px] justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                                 {date ? format(date, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
                             </Button>
                         </PopoverTrigger>
@@ -93,7 +93,7 @@ export default function VesselsChartsPage() {
                     </Popover>
 
                     <Select value={period} onValueChange={setPeriod}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[160px]">
                             <SelectValue placeholder="Seleccionar período" />
                         </SelectTrigger>
                         <SelectContent>
@@ -122,38 +122,38 @@ export default function VesselsChartsPage() {
                 isLoading={isLoading}
             />            {/* Tabs for different chart views */}
             <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto">
-                    <TabsTrigger value="overview" className="flex items-center">
-                        <Activity className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Resumen</span>
+                <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+                    <TabsTrigger value="overview" className="flex items-center text-xs sm:text-sm">
+                        <Activity className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Resumen</span>
                     </TabsTrigger>
-                    <TabsTrigger value="types" className="flex items-center">
-                        <Ship className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Tipos</span>
+                    <TabsTrigger value="types" className="flex items-center text-xs sm:text-sm">
+                        <Ship className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Tipos</span>
                     </TabsTrigger>
-                    <TabsTrigger value="activity" className="flex items-center">
-                        <LineChart className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Actividad</span>
+                    <TabsTrigger value="activity" className="flex items-center text-xs sm:text-sm">
+                        <LineChart className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Actividad</span>
                     </TabsTrigger>
-                    <TabsTrigger value="status" className="flex items-center">
-                        <PieChart className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Estado</span>
+                    <TabsTrigger value="status" className="flex items-center text-xs sm:text-sm">
+                        <PieChart className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Estado</span>
                     </TabsTrigger>
-                    <TabsTrigger value="age" className="flex items-center">
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Antigüedad</span>
+                    <TabsTrigger value="age" className="flex items-center text-xs sm:text-sm">
+                        <BarChart3 className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Antigüedad</span>
                     </TabsTrigger>
-                    <TabsTrigger value="performance" className="flex items-center">
-                        <Activity className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Rendimiento</span>
+                    <TabsTrigger value="performance" className="flex items-center text-xs sm:text-sm">
+                        <Activity className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Rendimiento</span>
                     </TabsTrigger>
-                    <TabsTrigger value="map" className="flex items-center">
-                        <Navigation className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Mapa</span>
+                    <TabsTrigger value="map" className="flex items-center text-xs sm:text-sm">
+                        <Navigation className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Mapa</span>
                     </TabsTrigger>
-                    <TabsTrigger value="routes" className="flex items-center">
-                        <Route className="mr-2 h-4 w-4" />
-                        <span className="hidden md:inline">Rutas</span>
+                    <TabsTrigger value="routes" className="flex items-center text-xs sm:text-sm">
+                        <Route className="mr-1.5 h-4 w-4" />
+                        <span className="hidden sm:inline">Rutas</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -161,12 +161,12 @@ export default function VesselsChartsPage() {
                 <TabsContent value="overview" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <div className="space-y-0.5">
+                            <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                                <div className="space-y-0.5 min-w-0">
                                     <CardTitle className="text-base">Unidades por Tipo</CardTitle>
                                     <CardDescription>Distribución de la flota por categoría</CardDescription>
                                 </div>
-                                <Ship className="h-4 w-4 text-muted-foreground" />
+                                <Ship className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                             </CardHeader>                            <CardContent>
                                 <VesselsByTypeChart
                                     data={dashboardData?.vessels_by_type || []}
@@ -176,12 +176,12 @@ export default function VesselsChartsPage() {
                             </CardContent>
                         </Card>
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <div className="space-y-0.5">
+                            <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                                <div className="space-y-0.5 min-w-0">
                                     <CardTitle className="text-base">Estado de Unidades</CardTitle>
                                     <CardDescription>Distribución por estado operativo</CardDescription>
                                 </div>
-                                <Ship className="h-4 w-4 text-muted-foreground" />
+                                <Ship className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                             </CardHeader>
                             <CardContent>
                                 <VesselsStatusChart
@@ -199,7 +199,7 @@ export default function VesselsChartsPage() {
                                 <CardTitle className="text-base">Actividad de Unidades</CardTitle>
                                 <CardDescription>Viajes registrados en el último período</CardDescription>
                             </div>
-                            <LineChart className="h-4 w-4 text-muted-foreground" />
+                            <LineChart className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                         </CardHeader>                        <CardContent>
                             <VesselsActivityChart
                                 data={dashboardData?.monthly_activity || []}
@@ -211,12 +211,12 @@ export default function VesselsChartsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <div className="space-y-0.5">
+                            <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                                <div className="space-y-0.5 min-w-0">
                                     <CardTitle className="text-base">Antigüedad de la Flota</CardTitle>
                                     <CardDescription>Distribución por año de fabricación</CardDescription>
                                 </div>
-                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                <BarChart3 className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                             </CardHeader>                            <CardContent>
                                 <VesselsAgeChart
                                     data={dashboardData?.fleet_aging || []}
@@ -226,12 +226,12 @@ export default function VesselsChartsPage() {
                             </CardContent>
                         </Card>
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <div className="space-y-0.5">
+                            <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
+                                <div className="space-y-0.5 min-w-0">
                                     <CardTitle className="text-base">Comparativa de Rendimiento</CardTitle>
                                     <CardDescription>Eficiencia por tipo de embarcación</CardDescription>
                                 </div>
-                                <Activity className="h-4 w-4 text-muted-foreground" />
+                                <Activity className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
                             </CardHeader>
                             <CardContent>
                                 <VesselsComparisonChart height={220} />

@@ -52,7 +52,7 @@ export default function DashboardPage() {
     <div className="flex flex-1 flex-col gap-6 py-4 px-4 lg:px-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Ship className="h-6 w-6" /> Dashboard de la Flota
@@ -61,7 +61,7 @@ export default function DashboardPage() {
             Resumen general del sistema de tracking marítimo
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadStats} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={loadStats} disabled={loading} className="self-start sm:self-auto">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Actualizar
         </Button>
@@ -126,7 +126,7 @@ export default function DashboardPage() {
             {loading ? (
               <div className="h-48 bg-muted animate-pulse rounded" />
             ) : byTypeData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
                     data={byTypeData}
@@ -135,10 +135,6 @@ export default function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ type, percent }) =>
-                      `${type} ${Math.round((percent ?? 0) * 100)}%`
-                    }
-                    labelLine={false}
                   >
                     {byTypeData.map((_entry, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -157,7 +153,7 @@ export default function DashboardPage() {
 
       {/* Últimas posiciones */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
               <MapPin className="h-4 w-4" />
@@ -171,6 +167,7 @@ export default function DashboardPage() {
             variant="outline"
             size="sm"
             onClick={() => navigate('/tracking/map')}
+            className="self-start sm:self-auto"
           >
             <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
             Ver mapa
@@ -191,8 +188,8 @@ export default function DashboardPage() {
                     <th className="text-left py-2 pr-4 font-medium">Embarcación</th>
                     <th className="text-left py-2 pr-4 font-medium">Tipo</th>
                     <th className="text-left py-2 pr-4 font-medium">Estado</th>
-                    <th className="text-left py-2 pr-4 font-medium">Coordenadas</th>
-                    <th className="text-left py-2 font-medium">Último reporte</th>
+                    <th className="text-left py-2 pr-4 font-medium hidden md:table-cell">Coordenadas</th>
+                    <th className="text-left py-2 font-medium hidden lg:table-cell">Último reporte</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,12 +224,12 @@ export default function DashboardPage() {
                           </Badge>
                         )}
                       </td>
-                      <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
+                      <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground hidden md:table-cell">
                         {pos.latitude && pos.longitude
                           ? `${Number(pos.latitude).toFixed(5)}, ${Number(pos.longitude).toFixed(5)}`
                           : '—'}
                       </td>
-                      <td className="py-2.5 text-xs text-muted-foreground">
+                      <td className="py-2.5 text-xs text-muted-foreground hidden lg:table-cell">
                         {pos.last_position_at
                           ? formatDateTimeMedium(pos.last_position_at)
                           : '—'}

@@ -20,23 +20,23 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 *:data-[slot=card]:shadow-xs *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card">
 
-      {/* Embarcaciones totales */}
+      {/* Total Unidades */}
       <Card className="@container/card">
-        <CardHeader className="relative pr-20">
-          <CardDescription className="flex items-center gap-1.5">
-            <Ship className="h-3.5 w-3.5" /> Total Unidades
-          </CardDescription>
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-            {metrics ? metrics.total_vessels : <Skeleton />}
-          </CardTitle>
-          <div className="absolute right-4 top-4">
-            {activeRate !== null && (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
-                <TrendingUpIcon className="size-3" />
-                {activeRate}% activas
-              </Badge>
-            )}
+        <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+          <div className="space-y-1.5">
+            <CardDescription className="flex items-center gap-1.5">
+              <Ship className="h-3.5 w-3.5" /> Total Unidades
+            </CardDescription>
+            <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+              {metrics ? metrics.total_vessels : <Skeleton />}
+            </CardTitle>
           </div>
+          {activeRate !== null && (
+            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap shrink-0">
+              <TrendingUpIcon className="size-3" />
+              {activeRate}% activas
+            </Badge>
+          )}
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -47,21 +47,21 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      {/* Trackings registrados */}
+      {/* Puntos de Tracking */}
       <Card className="@container/card">
-        <CardHeader className="relative pr-20">
-          <CardDescription className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" /> Puntos de Tracking
-          </CardDescription>
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-            {metrics ? metrics.total_trackings.toLocaleString('es-ES') : <Skeleton />}
-          </CardTitle>
-          <div className="absolute right-4 top-4">
-            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
-              <Activity className="size-3" />
-              Activo
-            </Badge>
+        <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+          <div className="space-y-1.5">
+            <CardDescription className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" /> Puntos de Tracking
+            </CardDescription>
+            <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+              {metrics ? metrics.total_trackings.toLocaleString('es-ES') : <Skeleton />}
+            </CardTitle>
           </div>
+          <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap shrink-0">
+            <Activity className="size-3" />
+            Activo
+          </Badge>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -71,20 +71,20 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      {/* Embarcaciones activas */}
+      {/* Unidades Activas */}
       <Card className="@container/card">
-        <CardHeader className="relative pr-20">
-          <CardDescription className="flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" /> Unidades Activas
-          </CardDescription>
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-            {metrics ? metrics.active_vessels : <Skeleton />}
-          </CardTitle>
-          <div className="absolute right-4 top-4">
-            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap text-emerald-600 border-emerald-300">
-              <TrendingUpIcon className="size-3" /> Operativas
-            </Badge>
+        <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+          <div className="space-y-1.5">
+            <CardDescription className="flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" /> Unidades Activas
+            </CardDescription>
+            <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+              {metrics ? metrics.active_vessels : <Skeleton />}
+            </CardTitle>
           </div>
+          <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap shrink-0 text-emerald-600 border-emerald-300">
+            <TrendingUpIcon className="size-3" /> Operativas
+          </Badge>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -97,26 +97,26 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      {/* Alertas / Usuarios */}
+      {/* Usuarios */}
       <Card className="@container/card">
-        <CardHeader className="relative pr-20">
-          <CardDescription className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Usuarios del sistema
-          </CardDescription>
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-            {metrics ? metrics.total_users : <Skeleton />}
-          </CardTitle>
-          <div className="absolute right-4 top-4">
-            {metrics && metrics.vessels_with_alerts > 0 ? (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap text-amber-600 border-amber-300">
-                <AlertTriangle className="size-3" /> {metrics.vessels_with_alerts} alertas
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
-                <TrendingUpIcon className="size-3" /> Sin alertas
-              </Badge>
-            )}
+        <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+          <div className="space-y-1.5">
+            <CardDescription className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Usuarios del sistema
+            </CardDescription>
+            <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+              {metrics ? metrics.total_users : <Skeleton />}
+            </CardTitle>
           </div>
+          {metrics && metrics.vessels_with_alerts > 0 ? (
+            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap shrink-0 text-amber-600 border-amber-300">
+              <AlertTriangle className="size-3" /> {metrics.vessels_with_alerts} alertas
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap shrink-0">
+              <TrendingUpIcon className="size-3" /> Sin alertas
+            </Badge>
+          )}
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
@@ -132,4 +132,3 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
     </div>
   )
 }
-

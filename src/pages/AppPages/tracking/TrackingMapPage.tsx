@@ -78,9 +78,8 @@ export default function TrackingMapPage() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
-    // Layout
+    const [showSidePanel, setShowSidePanel] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
-    const [showSidePanel, setShowSidePanel] = useState(true)
 
     // â”€â”€ Cargar lista de embarcaciones (una sola vez) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     useEffect(() => {
@@ -273,7 +272,7 @@ export default function TrackingMapPage() {
     // ── FULLSCREEN MODE ──────────────────────────────────────────────────────
     if (isFullscreen) {
         return (
-            <div className="fixed inset-0 z-50 bg-background flex h-screen w-screen">
+            <div className="fixed inset-0 z-50 bg-background flex">
                 {/* Mapa ocupa todo */}
                 <div className="flex-1 relative h-full min-h-0">
                     <TrackingMap
@@ -331,48 +330,65 @@ export default function TrackingMapPage() {
                     )}
                 </div>
 
-                {/* Panel lateral flotante */}
+                {/* Panel lateral — overlay en móvil, fixed width en desktop */}
                 {showSidePanel && (
-                    <div className="relative z-[1] w-80 border-l bg-background overflow-y-auto p-3">
-                        {/* Filtros compactos */}
-                        <div className="space-y-2 mb-3">
-                            <Select
-                                value={selectedVessel?.toString() ?? ""}
-                                onValueChange={v => setSelectedVessel(parseInt(v, 10))}
+                    <>
+                        {/* Overlay semitransparente solo en móvil */}
+                        <div
+                            className="lg:hidden fixed inset-0 z-[1002] bg-black/30"
+                            onClick={() => setShowSidePanel(false)}
+                        />
+                        <div className="absolute lg:relative z-[1003] right-0 top-0 bottom-0 w-80 lg:w-80 border-l bg-background overflow-y-auto p-3 shadow-lg lg:shadow-none">
+                            {/* Cerrar panel en móvil */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="lg:hidden absolute top-2 right-2 h-7 w-7"
+                                onClick={() => setShowSidePanel(false)}
                             >
-                                <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Unidad" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vessels.map(vessel => (
-                                        <SelectItem key={vessel.id} value={vessel.id.toString()}>
-                                            <span className="text-xs">{vessel.name}</span>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                <Minimize2 className="h-3.5 w-3.5" />
+                            </Button>
 
-                            <div className="flex gap-2">
-                                <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                                    <input type="checkbox" checked={showTrajectory} onChange={e => setShowTrajectory(e.target.checked)} className="rounded border-gray-300 text-blue-600 h-3 w-3" />
-                                    Trayectoria
-                                </label>
-                                <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                                    <input type="checkbox" checked={showAllVessels} onChange={e => setShowAllVessels(e.target.checked)} className="rounded border-gray-300 text-blue-600 h-3 w-3" />
-                                    Otras
-                                </label>
+                            {/* Filtros compactos */}
+                            <div className="space-y-2 mb-3">
+                                <Select
+                                    value={selectedVessel?.toString() ?? ""}
+                                    onValueChange={v => setSelectedVessel(parseInt(v, 10))}
+                                >
+                                    <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue placeholder="Unidad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {vessels.map(vessel => (
+                                            <SelectItem key={vessel.id} value={vessel.id.toString()}>
+                                                <span className="text-xs">{vessel.name}</span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <div className="flex gap-2">
+                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                                        <input type="checkbox" checked={showTrajectory} onChange={e => setShowTrajectory(e.target.checked)} className="rounded border-gray-300 text-blue-600 h-3 w-3" />
+                                        Trayectoria
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                                        <input type="checkbox" checked={showAllVessels} onChange={e => setShowAllVessels(e.target.checked)} className="rounded border-gray-300 text-blue-600 h-3 w-3" />
+                                        Otras
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-0.5">
+                                    <CalendarIcon className="h-3 w-3" />
+                                    <span>{format(selectedDay, 'dd/MM/yyyy')}</span>
+                                    <Clock className="h-3 w-3 ml-1" />
+                                    <span>{String(timeFrom).padStart(2, '0')}:00 – {String(timeTo).padStart(2, '0')}:59</span>
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-0.5">
-                                <CalendarIcon className="h-3 w-3" />
-                                <span>{format(selectedDay, 'dd/MM/yyyy')}</span>
-                                <Clock className="h-3 w-3 ml-1" />
-                                <span>{String(timeFrom).padStart(2, '0')}:00 – {String(timeTo).padStart(2, '0')}:59</span>
-                            </div>
+                            {sidePanel}
                         </div>
-
-                        {sidePanel}
-                    </div>
+                    </>
                 )}
             </div>
         )
@@ -380,7 +396,7 @@ export default function TrackingMapPage() {
 
     // ── NORMAL MODE ──────────────────────────────────────────────────────────
     return (
-        <div className="container mx-auto py-4 space-y-4 px-4 sm:px-6">
+        <div className="flex flex-1 flex-col gap-4 py-4 px-4 lg:px-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -612,7 +628,7 @@ export default function TrackingMapPage() {
 
             {/* Mapa + Panel lateral */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
+                <div className="xl:col-span-2">
                     <Card className="relative">
                         <CardContent className="p-0">
                             {/* Botón fullscreen */}
@@ -640,7 +656,28 @@ export default function TrackingMapPage() {
                     </Card>
                 </div>
 
-                <div>{sidePanel}</div>
+                <div className="hidden xl:block">{sidePanel}</div>
+
+                {/* Toggle panel en mobile/tablet */}
+                {!showSidePanel && (
+                    <div className="xl:hidden flex justify-end">
+                        <Button variant="outline" size="sm" onClick={() => setShowSidePanel(true)}>
+                            <PanelRightOpen className="h-4 w-4 mr-1.5" />
+                            Mostrar panel
+                        </Button>
+                    </div>
+                )}
+                {showSidePanel && (
+                    <div className="xl:hidden">
+                        <div className="flex justify-end mb-2">
+                            <Button variant="outline" size="sm" onClick={() => setShowSidePanel(false)}>
+                                <PanelRightClose className="h-4 w-4 mr-1.5" />
+                                Ocultar panel
+                            </Button>
+                        </div>
+                        {sidePanel}
+                    </div>
+                )}
             </div>
         </div>
     )

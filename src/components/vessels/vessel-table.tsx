@@ -36,12 +36,12 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
                             <TableHead className="w-12">
                                 <Checkbox />
                             </TableHead>
-                            <TableHead>ID</TableHead>
+                            <TableHead className="w-10">ID</TableHead>
                             <TableHead>Nombre</TableHead>
-                            <TableHead>IMO</TableHead>
-                            <TableHead>Fecha Creación</TableHead>
-                            <TableHead>Fecha Actualización</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
+                            <TableHead className="hidden md:table-cell">IMO</TableHead>
+                            <TableHead className="hidden lg:table-cell">Fecha Creación</TableHead>
+                            <TableHead className="hidden lg:table-cell">Fecha Actualización</TableHead>
+                            <TableHead className="text-right w-[100px]">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -56,13 +56,13 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
                                 <TableCell>
                                     <div className="h-4 w-32 bg-muted animate-pulse rounded" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="hidden md:table-cell">
                                     <div className="h-4 w-20 bg-muted animate-pulse rounded" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="hidden lg:table-cell">
                                     <div className="h-4 w-20 bg-muted animate-pulse rounded" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="hidden lg:table-cell">
                                     <div className="h-4 w-20 bg-muted animate-pulse rounded" />
                                 </TableCell>
                                 <TableCell>
@@ -88,12 +88,12 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
                         <TableHead className="w-12">
                             <Checkbox />
                         </TableHead>
-                        <TableHead>ID</TableHead>
+                        <TableHead className="w-10">ID</TableHead>
                         <TableHead>Nombre</TableHead>
-                        <TableHead>IMO</TableHead>
-                        <TableHead>Fecha Creación</TableHead>
-                        <TableHead>Fecha Actualización</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead className="hidden md:table-cell">IMO</TableHead>
+                        <TableHead className="hidden lg:table-cell">Fecha Creación</TableHead>
+                        <TableHead className="hidden lg:table-cell">Fecha Actualización</TableHead>
+                        <TableHead className="text-right w-[100px]">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -110,12 +110,12 @@ export function VesselTable({ vessels, onView, onEdit, onDelete, isLoading, load
                                     <Checkbox />
                                 </TableCell>
                                 <TableCell className="font-medium">{vessel.id}</TableCell>
-                                <TableCell className="max-w-xs truncate" title={vessel.name}>
+                                <TableCell className="max-w-[120px] truncate" title={vessel.name}>
                                     {vessel.name}
                                 </TableCell>
-                                <TableCell>{vessel.imo}</TableCell>
-                                <TableCell>{formatDate(vessel.created_at)}</TableCell>
-                                <TableCell>{formatDate(vessel.updated_at)}</TableCell>
+                                <TableCell className="hidden md:table-cell">{vessel.imo}</TableCell>
+                                <TableCell className="hidden lg:table-cell">{formatDate(vessel.created_at)}</TableCell>
+                                <TableCell className="hidden lg:table-cell">{formatDate(vessel.updated_at)}</TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end space-x-2">
                                         <Button variant="ghost" size="icon" onClick={() => onView(vessel)} className="h-8 w-8">
