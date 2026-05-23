@@ -425,10 +425,7 @@ export default function UserProfilePage() {
   // Render
   // ----------------------------
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
             {/* Header del perfil */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -868,9 +865,6 @@ export default function UserProfilePage() {
                 </Card>
               </TabsContent>
             </Tabs>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
