@@ -13,8 +13,9 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts"
 import {
-  Ship, MapPin, Activity, TrendingUp, ExternalLink, RefreshCw,
+  Ship, MapPin, Activity, TrendingUp, ExternalLink, RefreshCw, Wifi, WifiOff,
 } from "lucide-react"
+import { useFleetOnlineStatus } from "@/hooks/useFleetOnlineStatus"
 import { formatDateTimeMedium } from "@/utils/date"
 
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"]
@@ -30,19 +31,21 @@ export default function DashboardPage() {
     setError(null)
     dashboardService.getStats()
       .then(setStats)
-      .catch(() => setError("No se pudieron cargar las estadÃ­sticas"))
+      .catch(() => setError("No se pudieron cargar las estadísticas"))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { loadStats() }, [])
 
-  // Datos para grÃ¡fico de actividad mensual
+  const { isOnline } = useFleetOnlineStatus(stats?.vessel_positions ?? [])
+
+  // Datos para gráfico de actividad mensual
   const monthlyData = stats?.monthly_activity.map(m => ({
     mes: m.month_name?.slice(0, 3) ?? m.month,
     trackings: m.trackings,
   })) ?? []
 
-  // Datos para grÃ¡fico de tipos de embarcaciÃ³n
+  // Datos para gráfico de tipos de embarcación
   const byTypeData = stats?.vessels_by_type ?? []
 
   return (
@@ -55,7 +58,7 @@ export default function DashboardPage() {
             <Ship className="h-6 w-6" /> Dashboard de la Flota
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Resumen general del sistema de tracking marÃ­timo
+            Resumen general del sistema de tracking marítimo
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadStats} disabled={loading}>
@@ -71,9 +74,9 @@ export default function DashboardPage() {
       )}
 
       {/* Tarjetas KPI */}
-      <SectionCards />
+      <SectionCards metrics={stats?.main_metrics} />
 
-      {/* GrÃ¡ficos principales */}
+      {/* Gráficos principales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Actividad mensual */}
@@ -84,7 +87,7 @@ export default function DashboardPage() {
               Actividad de Tracking Mensual
             </CardTitle>
             <CardDescription>
-              NÃºmero de puntos GPS registrados por mes
+              Número de puntos GPS registrados por mes
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -108,15 +111,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Por tipo de embarcaciÃ³n */}
+        {/* Por tipo de embarcación */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Ship className="h-4 w-4" />
-              DistribuciÃ³n por Tipo
+              Distribución por Tipo
             </CardTitle>
             <CardDescription>
-              Flota clasificada por tipo de embarcaciÃ³n
+              Flota clasificada por tipo de embarcación
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -152,16 +155,16 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Ãšltimas posiciones */}
+      {/* Últimas posiciones */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
               <MapPin className="h-4 w-4" />
-              Ãšltimas Posiciones Registradas
+              Últimas Posiciones Registradas
             </CardTitle>
             <CardDescription>
-              PosiciÃ³n mÃ¡s reciente de cada embarcaciÃ³n
+              Posición más reciente de cada embarcación
             </CardDescription>
           </div>
           <Button
@@ -185,11 +188,11 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-muted-foreground">
-                    <th className="text-left py-2 pr-4 font-medium">EmbarcaciÃ³n</th>
+                    <th className="text-left py-2 pr-4 font-medium">Embarcación</th>
                     <th className="text-left py-2 pr-4 font-medium">Tipo</th>
                     <th className="text-left py-2 pr-4 font-medium">Estado</th>
                     <th className="text-left py-2 pr-4 font-medium">Coordenadas</th>
-                    <th className="text-left py-2 font-medium">Ãšltimo reporte</th>
+                    <th className="text-left py-2 font-medium">Último reporte</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,25 +212,30 @@ export default function DashboardPage() {
                         )}
                       </td>
                       <td className="py-2.5 pr-4">
-                        <Badge variant="outline" className="text-xs">{pos.type || 'â€”'}</Badge>
+                        <Badge variant="outline" className="text-xs">{pos.type || '—'}</Badge>
                       </td>
                       <td className="py-2.5 pr-4">
-                        <Badge
-                          variant={pos.status === 'Activa' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {pos.status || 'â€”'}
-                        </Badge>
+                        {isOnline(pos.id) ? (
+                          <Badge className="text-xs bg-green-500 hover:bg-green-600 gap-1">
+                            <Wifi className="h-3 w-3" />
+                            En línea
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs gap-1 text-muted-foreground">
+                            <WifiOff className="h-3 w-3" />
+                            Sin señal
+                          </Badge>
+                        )}
                       </td>
                       <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
                         {pos.latitude && pos.longitude
                           ? `${Number(pos.latitude).toFixed(5)}, ${Number(pos.longitude).toFixed(5)}`
-                          : 'â€”'}
+                          : '—'}
                       </td>
                       <td className="py-2.5 text-xs text-muted-foreground">
                         {pos.last_position_at
                           ? formatDateTimeMedium(pos.last_position_at)
-                          : 'â€”'}
+                          : '—'}
                       </td>
                     </tr>
                   ))}
@@ -237,7 +245,7 @@ export default function DashboardPage() {
           ) : (
             <div className="text-center py-10 text-muted-foreground">
               <MapPin className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No hay posiciones registradas aÃºn.</p>
+              <p className="text-sm">No hay posiciones registradas aún.</p>
               <Button
                 variant="link"
                 size="sm"

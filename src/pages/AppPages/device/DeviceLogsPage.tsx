@@ -24,6 +24,12 @@ import {
 } from "lucide-react"
 import { formatTimeMedium, formatDate as fmtDate } from "@/utils/date"
 
+function getServerOrigin(): string {
+    const apiUrl: string =
+        import.meta.env.VITE_API_URL ?? import.meta.env.VITE_API_LOCAL ?? ''
+    return apiUrl.replace(/\/api\/v\d+\/?$/, '').replace(/\/$/, '')
+}
+
 interface TelemetryLog {
     type: string
     timestamp: string
@@ -57,6 +63,8 @@ export default function DeviceLogsPage() {
     } | null>(null)
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const echoRef = useRef<any>(null)
 
     useEffect(() => {
         vesselService.getVessels({ page: 1, per_page: 100 })
@@ -93,7 +101,7 @@ export default function DeviceLogsPage() {
 
     useEffect(() => { fetchLogs() }, [fetchLogs])
 
-    // Auto-refresh
+    // Auto-refresh de logs (no afecta al estado online/offline — eso va por WebSocket)
     useEffect(() => {
         if (autoRefresh && selectedVessel) {
             intervalRef.current = setInterval(fetchLogs, 5000)
@@ -102,6 +110,56 @@ export default function DeviceLogsPage() {
             if (intervalRef.current) clearInterval(intervalRef.current)
         }
     }, [autoRefresh, selectedVessel, fetchLogs])
+
+    // WebSocket: actualiza is_online en tiempo real sin polling
+    useEffect(() => {
+        if (!selectedVessel) return
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        let cancelled = false
+
+        Promise.all([
+            import('laravel-echo'),
+            import('pusher-js'),
+        ]).then(([echoMod, pusherMod]) => {
+            if (cancelled) return
+            ;(window as Window & { Pusher?: unknown }).Pusher = pusherMod.default
+
+            const echo = new echoMod.default({
+                broadcaster: 'reverb',
+                key:      import.meta.env.VITE_REVERB_APP_KEY,
+                wsHost:   import.meta.env.VITE_REVERB_HOST   ?? 'localhost',
+                wsPort:   Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
+                wssPort:  Number(import.meta.env.VITE_REVERB_PORT ?? 443),
+                forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
+                enabledTransports: ['ws', 'wss'],
+                authEndpoint: `${getServerOrigin()}/api/broadcasting/auth`,
+                auth: { headers: { Authorization: `Bearer ${token}` } },
+            })
+            echoRef.current = echo
+
+            echo
+                .private('fleet.tracking')
+                .listen('.tracking.created', (p: { vessel_id: number }) => {
+                    if (p.vessel_id !== selectedVessel) return
+                    setDeviceInfo(prev => prev ? { ...prev, is_online: true } : prev)
+                })
+                .listen('.device.went_offline', (p: { vessel_id: number }) => {
+                    if (p.vessel_id !== selectedVessel) return
+                    setDeviceInfo(prev => prev ? { ...prev, is_online: false } : prev)
+                })
+        })
+
+        return () => {
+            cancelled = true
+            if (echoRef.current) {
+                echoRef.current.leave('fleet.tracking')
+                echoRef.current.disconnect()
+                echoRef.current = null
+            }
+        }
+    }, [selectedVessel]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const formatTime = (ts: string) => {
         return formatTimeMedium(ts)

@@ -1,22 +1,17 @@
-import { useEffect, useState } from "react"
 import { TrendingUpIcon, Ship, MapPin, Activity, Users, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { dashboardService } from "@/services/dashboard.service"
 import type { MainMetrics } from "@/types/models/dashboardStats"
 
 function Skeleton() {
   return <div className="h-7 w-24 bg-muted animate-pulse rounded" />
 }
 
-export function SectionCards() {
-  const [metrics, setMetrics] = useState<MainMetrics | null>(null)
+interface SectionCardsProps {
+  metrics?: MainMetrics | null
+}
 
-  useEffect(() => {
-    dashboardService.getStats()
-      .then(data => setMetrics(data.main_metrics))
-      .catch(console.error)
-  }, [])
+export function SectionCards({ metrics = null }: SectionCardsProps) {
 
   const activeRate = metrics
     ? Math.round((metrics.active_vessels / Math.max(metrics.total_vessels, 1)) * 100)
