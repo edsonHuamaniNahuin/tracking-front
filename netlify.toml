@@ -30,7 +30,10 @@
     Referrer-Policy        = "strict-origin-when-cross-origin"
 
 # ── SPA routing: todas las rutas van a index.html ────────────────────────────
-# Necesario para que React Router funcione al recargar o acceder directamente.
+# Netlify prioriza archivos reales sobre redirects.
+# Si el archivo existe (robots.txt, sitemap.xml, favicon.ico) → se sirve el archivo real.
+# Si no existe → se sirve index.html para que React Router maneje la ruta.
+# La app muestra NotFoundPage para rutas inválidas (ej: /#/prueba).
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
