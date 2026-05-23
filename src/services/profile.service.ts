@@ -3,15 +3,24 @@ import type {
     GenericResponse,
     UpdateProfileRequest,
     ChangePasswordRequest,
+    UserActivityResponse,
 } from '@/types/profile';
 
 export const profileService = {
 
     /**
-     * PUT /user — Muestra datos del perfil
+     * GET /user — Muestra datos del perfil
      */
     show: async (): Promise<GenericResponse> => {
         const resp = await api.get<GenericResponse>('/user');
+        return resp.data;
+    },
+
+    /**
+     * GET /user/activity — Estadísticas y actividad reciente
+     */
+    getActivity: async (): Promise<UserActivityResponse> => {
+        const resp = await api.get<UserActivityResponse>('/user/activity');
         return resp.data;
     },
 

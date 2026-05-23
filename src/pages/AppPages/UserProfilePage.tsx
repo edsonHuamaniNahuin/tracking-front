@@ -5,9 +5,10 @@ import {
   Camera,
   User as UserIcon,
   Mail as MailIcon,
+  MapPin,
   CheckCircle2Icon,
   AlertCircleIcon,
-  Loader2Icon, // <--- Icono para animar el “loading”
+  Loader2Icon,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,6 +36,7 @@ import type {
   ChangePasswordRequest,
   GenericResponse,
   UpdateProfileResponse,
+  UserActivityResponse,
 } from '@/types/profile';
 import { profileService } from '@/services/profile.service';
 
@@ -78,6 +80,9 @@ export default function UserProfilePage() {
     { type: 'success' | 'error'; message: string } | null
   >(null);
 
+  // Actividad del usuario
+  const [activityData, setActivityData] = useState<UserActivityResponse | null>(null);
+
 
   const didFetch = useRef(false)
   // ----------------------------
@@ -108,6 +113,34 @@ export default function UserProfilePage() {
     };
     fetchUser();
   }, []);
+
+  // Carga de actividad del usuario
+  useEffect(() => {
+    profileService.getActivity()
+      .then(setActivityData)
+      .catch(() => { /* silencioso, no bloquea la UI */ });
+  }, []);
+
+  const activityIcon = (icon: string) => {
+    const cls = 'w-4 h-4';
+    switch (icon) {
+      case 'calendar': return <CalendarDays className={`${cls} text-purple-600`} />;
+      case 'email':    return <MailIcon className={`${cls} text-green-600`} />;
+      case 'user':     return <UserIcon className={`${cls} text-blue-600`} />;
+      case 'map':      return <MapPin className={`${cls} text-amber-600`} />;
+      default:         return <UserIcon className={`${cls} text-blue-600`} />;
+    }
+  };
+
+  const activityIconBg = (icon: string) => {
+    switch (icon) {
+      case 'calendar': return 'bg-purple-100';
+      case 'email':    return 'bg-green-100';
+      case 'user':     return 'bg-blue-100';
+      case 'map':      return 'bg-amber-100';
+      default:         return 'bg-blue-100';
+    }
+  };
 
   // ----------------------------
   // Estado “loading” global
@@ -773,41 +806,26 @@ export default function UserProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                          <UserIcon className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">Perfil actualizado</p>
-                          <p className="text-xs text-muted-foreground">
-                            Hace 2 horas
-                          </p>
-                        </div>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                          <MailIcon className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">Email verificado</p>
-                          <p className="text-xs text-muted-foreground">
-                            Hace 1 día
-                          </p>
-                        </div>
-                      </div>
-                      <Separator />
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-full">
-                          <CalendarDays className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">Cuenta creada</p>
-                          <p className="text-xs text-muted-foreground">
-                            Hace 30 días
-                          </p>
-                        </div>
-                      </div>
+                      {activityData && activityData.activities.length > 0 ? (
+                        activityData.activities.map((item, i) => (
+                          <div key={i}>
+                            <div className="flex items-center space-x-4">
+                              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${activityIconBg(item.icon)}`}>
+                                {activityIcon(item.icon)}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium">{item.title}</p>
+                                <p className="text-xs text-muted-foreground">{item.time}</p>
+                              </div>
+                            </div>
+                            {i < activityData.activities.length - 1 && <Separator className="mt-4" />}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Cargando actividad...
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -822,16 +840,22 @@ export default function UserProfilePage() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center space-y-2">
-                        <p className="text-2xl font-bold">127</p>
+                        <p className="text-2xl font-bold">
+                          {activityData?.stats.days_active ?? '—'}
+                        </p>
                         <p className="text-sm text-muted-foreground">Días activo</p>
                       </div>
-                      <div className="text-center espacio-y-2">
-                        <p className="text-2xl font-bold">45</p>
-                        <p className="text-sm text-muted-foreground">Proyectos</p>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold">
+                          {activityData?.stats.vessels_count ?? '—'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Unidades</p>
                       </div>
-                      <div className="text-center espacio-y-2">
-                        <p className="text-2xl font-bold">892</p>
-                        <p className="text-sm text-muted-foreground">Acciones</p>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold">
+                          {activityData?.stats.total_trackings ?? '—'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Trackings</p>
                       </div>
                     </div>
                   </CardContent>

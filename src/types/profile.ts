@@ -37,3 +37,20 @@ export interface ChangePasswordRequest {
     new_password: string;
     new_password_confirmation: string;
 }
+
+export interface ActivityItem {
+    icon: string
+    title: string
+    time: string
+}
+
+export interface UserActivityStats {
+    days_active: number
+    vessels_count: number
+    total_trackings: number
+}
+
+export interface UserActivityResponse {
+    stats: UserActivityStats
+    activities: ActivityItem[]
+}
