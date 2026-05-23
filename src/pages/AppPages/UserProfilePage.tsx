@@ -844,19 +844,19 @@ export default function UserProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center space-y-2">
                         <p className="text-2xl font-bold">
-                          {activityData?.stats.days_active ?? '—'}
+                          {activityData?.stats?.days_active ?? '—'}
                         </p>
                         <p className="text-sm text-muted-foreground">Días activo</p>
                       </div>
                       <div className="text-center space-y-2">
                         <p className="text-2xl font-bold">
-                          {activityData?.stats.vessels_count ?? '—'}
+                          {activityData?.stats?.vessels_count ?? '—'}
                         </p>
                         <p className="text-sm text-muted-foreground">Unidades</p>
                       </div>
                       <div className="text-center space-y-2">
                         <p className="text-2xl font-bold">
-                          {activityData?.stats.total_trackings ?? '—'}
+                          {activityData?.stats?.total_trackings ?? '—'}
                         </p>
                         <p className="text-sm text-muted-foreground">Trackings</p>
                       </div>
