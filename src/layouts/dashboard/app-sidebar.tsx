@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   LayoutDashboardIcon,
+  HomeIcon,
   ShipIcon,
   BarChart2Icon,
   MapPinIcon,
@@ -42,9 +43,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // ── Items de navegación filtrados por rol/permiso ──────────────────────────
   const navItems = [
     {
+      name: "Inicio",
+      url: "/",
+      icon: HomeIcon,
+      show: true,
+    },
+    {
       name: "Dashboard",
       url: "/dashboard",
-      icon: LayoutDashboardIcon,
+      icon: BarChart2Icon,
       show: true,
     },
     {
@@ -91,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       name: "Mi perfil",
-      url: "/profile",
+      url: "/user",
       icon: UserIcon,
       show: true,
     },
@@ -118,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="/#/dashboard">
+              <a href="/#/">
                 <ArrowUpCircleIcon className="h-5 w-5" />
                 <span className="text-base font-semibold">TrackFleet</span>
               </a>
