@@ -22,7 +22,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
 
       {/* Embarcaciones totales */}
       <Card className="@container/card">
-        <CardHeader className="relative">
+        <CardHeader className="relative pr-20">
           <CardDescription className="flex items-center gap-1.5">
             <Ship className="h-3.5 w-3.5" /> Total Unidades
           </CardDescription>
@@ -31,7 +31,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
           </CardTitle>
           <div className="absolute right-4 top-4">
             {activeRate !== null && (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
+              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
                 <TrendingUpIcon className="size-3" />
                 {activeRate}% activas
               </Badge>
@@ -49,7 +49,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
 
       {/* Trackings registrados */}
       <Card className="@container/card">
-        <CardHeader className="relative">
+        <CardHeader className="relative pr-20">
           <CardDescription className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5" /> Puntos de Tracking
           </CardDescription>
@@ -57,7 +57,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
             {metrics ? metrics.total_trackings.toLocaleString('es-ES') : <Skeleton />}
           </CardTitle>
           <div className="absolute right-4 top-4">
-            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
+            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
               <Activity className="size-3" />
               Activo
             </Badge>
@@ -73,7 +73,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
 
       {/* Embarcaciones activas */}
       <Card className="@container/card">
-        <CardHeader className="relative">
+        <CardHeader className="relative pr-20">
           <CardDescription className="flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" /> Unidades Activas
           </CardDescription>
@@ -81,7 +81,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
             {metrics ? metrics.active_vessels : <Skeleton />}
           </CardTitle>
           <div className="absolute right-4 top-4">
-            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs text-emerald-600 border-emerald-300">
+            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap text-emerald-600 border-emerald-300">
               <TrendingUpIcon className="size-3" /> Operativas
             </Badge>
           </div>
@@ -99,7 +99,7 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
 
       {/* Alertas / Usuarios */}
       <Card className="@container/card">
-        <CardHeader className="relative">
+        <CardHeader className="relative pr-20">
           <CardDescription className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" /> Usuarios del sistema
           </CardDescription>
@@ -108,11 +108,11 @@ export function SectionCards({ metrics = null }: SectionCardsProps) {
           </CardTitle>
           <div className="absolute right-4 top-4">
             {metrics && metrics.vessels_with_alerts > 0 ? (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs text-amber-600 border-amber-300">
+              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap text-amber-600 border-amber-300">
                 <AlertTriangle className="size-3" /> {metrics.vessels_with_alerts} alertas
               </Badge>
             ) : (
-              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
+              <Badge variant="outline" className="flex gap-1 rounded-lg text-xs whitespace-nowrap">
                 <TrendingUpIcon className="size-3" /> Sin alertas
               </Badge>
             )}

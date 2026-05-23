@@ -90,13 +90,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => nav('/user')}>
                 <UserCircleIcon /> Cuenta
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon /> Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon /> Notifications
-              </DropdownMenuItem>
+              </DropdownMenuItem>              
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
