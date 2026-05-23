@@ -40,6 +40,7 @@ import type {
 } from '@/types/profile';
 import { profileService } from '@/services/profile.service';
 import { COUNTRIES, DEFAULT_COUNTRY, getCountryByCode } from '@/constants/countries';
+import { CountrySelector } from '@/components/ui/country-selector';
 
 export default function UserProfilePage() {
   // ----------------------------
@@ -571,25 +572,15 @@ export default function UserProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Teléfono</Label>
-                        <div className="flex gap-2">
-                          <select
-                            className="flex h-9 w-[110px] rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <CountrySelector
                             value={selectedCountry.code}
-                            onChange={(e) => {
-                              const c = getCountryByCode(e.target.value);
-                              if (c) {
-                                setSelectedCountry(c);
-                                setFormProfile(prev => ({ ...prev, country_code: c.code }));
-                              }
+                            onChange={(c) => {
+                              setSelectedCountry(c);
+                              setFormProfile(prev => ({ ...prev, country_code: c.code }));
                             }}
                             disabled={!isEditing || profileUpdating}
-                          >
-                            {COUNTRIES.map(c => (
-                              <option key={c.code} value={c.code}>
-                                {c.name} ({c.callingCode})
-                              </option>
-                            ))}
-                          </select>
+                          />
                           <div className="relative flex-1">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                               {selectedCountry.callingCode}
