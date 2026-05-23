@@ -430,7 +430,7 @@ export default function UserProfilePage() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="container mx-auto py-6 space-y-6">
             {/* Header del perfil */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
                 <p className="text-muted-foreground">
@@ -440,6 +440,7 @@ export default function UserProfilePage() {
               <Button
                 variant={isEditing ? 'outline' : 'default'}
                 onClick={() => setIsEditing((prev) => !prev)}
+                className="self-start sm:self-auto"
               >
                 {isEditing ? 'Cancelar' : 'Editar Perfil'}
               </Button>
@@ -448,8 +449,8 @@ export default function UserProfilePage() {
             {/* Información principal del usuario */}
             <Card>
               <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="relative self-center sm:self-auto">
                     <Avatar className="h-20 w-20">
                       <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>
@@ -470,10 +471,10 @@ export default function UserProfilePage() {
                       </Button>
                     )}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-center sm:text-left">
                     <h2 className="text-2xl font-semibold">{user.name}</h2>
                     <p className="text-muted-foreground">{user.email}</p>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center sm:justify-start space-x-2">
                       <Badge variant="secondary">Usuario Premium</Badge>
                       <Badge variant="outline">Verificado</Badge>
                     </div>
@@ -484,11 +485,11 @@ export default function UserProfilePage() {
 
             {/* Tabs de contenido */}
             <Tabs defaultValue="personal" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="personal">Información Personal</TabsTrigger>
-                <TabsTrigger value="security">Seguridad</TabsTrigger>
-                <TabsTrigger value="preferences">Preferencias</TabsTrigger>
-                <TabsTrigger value="activity">Actividad</TabsTrigger>
+              <TabsList className="h-auto flex-wrap gap-1 px-1 py-1">
+                <TabsTrigger value="personal" className="text-xs sm:text-sm">Perfil</TabsTrigger>
+                <TabsTrigger value="security" className="text-xs sm:text-sm">Seguridad</TabsTrigger>
+                <TabsTrigger value="preferences" className="text-xs sm:text-sm">Preferencias</TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs sm:text-sm">Actividad</TabsTrigger>
               </TabsList>
 
               {/* Tab de Información Personal */}
@@ -580,7 +581,7 @@ export default function UserProfilePage() {
                     </div>
 
                     {isEditing && (
-                      <div className="flex justify-end espacio-y-2">
+                      <div className="flex flex-col sm:flex-row justify-end gap-2">
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -595,12 +596,14 @@ export default function UserProfilePage() {
                             setIsEditing(false);
                           }}
                           disabled={profileUpdating}
+                          className="w-full sm:w-auto"
                         >
                           Cancelar
                         </Button>
                         <Button
                           onClick={submitProfileUpdate}
                           disabled={profileUpdating}
+                          className="w-full sm:w-auto"
                         >
                           {profileUpdating ? 'Guardando...' : 'Guardar Cambios'}
                         </Button>
