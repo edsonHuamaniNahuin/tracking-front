@@ -1,9 +1,10 @@
 import api from './api';
+import type { ApiResponse } from '@/types/api';
 import type {
     GenericResponse,
     UpdateProfileRequest,
     ChangePasswordRequest,
-    UserActivityResponse,
+    UserActivityData,
 } from '@/types/profile';
 
 export const profileService = {
@@ -19,9 +20,9 @@ export const profileService = {
     /**
      * GET /user/activity — Estadísticas y actividad reciente
      */
-    getActivity: async (): Promise<UserActivityResponse> => {
-        const resp = await api.get<UserActivityResponse>('/user/activity');
-        return resp.data;
+    getActivity: async (): Promise<UserActivityData> => {
+        const resp = await api.get<ApiResponse<UserActivityData>>('/user/activity');
+        return resp.data.data;
     },
 
 

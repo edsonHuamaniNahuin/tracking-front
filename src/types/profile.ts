@@ -50,7 +50,7 @@ export interface UserActivityStats {
     total_trackings: number
 }
 
-export interface UserActivityResponse {
+export interface UserActivityData {
     stats: UserActivityStats
     activities: ActivityItem[]
 }

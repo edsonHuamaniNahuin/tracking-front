@@ -36,7 +36,7 @@ import type {
   ChangePasswordRequest,
   GenericResponse,
   UpdateProfileResponse,
-  UserActivityResponse,
+  UserActivityData,
 } from '@/types/profile';
 import { profileService } from '@/services/profile.service';
 
@@ -81,7 +81,7 @@ export default function UserProfilePage() {
   >(null);
 
   // Actividad del usuario
-  const [activityData, setActivityData] = useState<UserActivityResponse | null>(null);
+  const [activityData, setActivityData] = useState<UserActivityData | null>(null);
 
 
   const didFetch = useRef(false)
@@ -806,26 +806,29 @@ export default function UserProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {activityData && activityData.activities.length > 0 ? (
-                        activityData.activities.map((item, i) => (
-                          <div key={i}>
-                            <div className="flex items-center space-x-4">
-                              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${activityIconBg(item.icon)}`}>
-                                {activityIcon(item.icon)}
+                      {(() => {
+                        const items = activityData?.activities ?? [];
+                        return items.length > 0 ? (
+                          items.map((item, i) => (
+                            <div key={i}>
+                              <div className="flex items-center space-x-4">
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${activityIconBg(item.icon)}`}>
+                                  {activityIcon(item.icon)}
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                  <p className="text-sm font-medium">{item.title}</p>
+                                  <p className="text-xs text-muted-foreground">{item.time}</p>
+                                </div>
                               </div>
-                              <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium">{item.title}</p>
-                                <p className="text-xs text-muted-foreground">{item.time}</p>
-                              </div>
+                              {i < items.length - 1 && <Separator className="mt-4" />}
                             </div>
-                            {i < activityData.activities.length - 1 && <Separator className="mt-4" />}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          Cargando actividad...
-                        </p>
-                      )}
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            Cargando actividad...
+                          </p>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
