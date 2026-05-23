@@ -39,6 +39,7 @@ import type {
   UserActivityData,
 } from '@/types/profile';
 import { profileService } from '@/services/profile.service';
+import { COUNTRIES, DEFAULT_COUNTRY, getCountryByCode } from '@/constants/countries';
 
 export default function UserProfilePage() {
   // ----------------------------
@@ -83,6 +84,9 @@ export default function UserProfilePage() {
   // Actividad del usuario
   const [activityData, setActivityData] = useState<UserActivityData | null>(null);
 
+  // País seleccionado para el teléfono
+  const [selectedCountry, setSelectedCountry] = useState(DEFAULT_COUNTRY);
+
 
   const didFetch = useRef(false)
   // ----------------------------
@@ -95,11 +99,14 @@ export default function UserProfilePage() {
       try {
         const resp: GenericResponse = await profileService.show();
         setUser(resp.data.user);
+        const savedCountry = getCountryByCode(resp.data.user.country_code ?? '');
+        if (savedCountry) setSelectedCountry(savedCountry);
         setFormProfile({
           name: resp.data.user.name,
           username: resp.data.user.username,
           email: resp.data.user.email,
           phone: resp.data.user.phone ?? '',
+          country_code: resp.data.user.country_code ?? DEFAULT_COUNTRY.code,
           bio: resp.data.user.bio ?? '',
           location: resp.data.user.location ?? '',
         });
@@ -207,6 +214,7 @@ export default function UserProfilePage() {
         username: formProfile.username,
         email: formProfile.email,
         phone: formProfile.phone,
+        country_code: formProfile.country_code,
         bio: formProfile.bio,
         location: formProfile.location,
       };
@@ -221,6 +229,7 @@ export default function UserProfilePage() {
           username: userResponse.username ?? prev.username,
           email: userResponse.email ?? prev.email,
           phone: userResponse.phone ?? prev.phone,
+          country_code: userResponse.country_code ?? prev.country_code,
           bio: userResponse.bio ?? prev.bio,
           location: userResponse.location ?? prev.location,
         };
@@ -436,7 +445,22 @@ export default function UserProfilePage() {
               </div>
               <Button
                 variant={isEditing ? 'outline' : 'default'}
-                onClick={() => setIsEditing((prev) => !prev)}
+                onClick={() => {
+                  if (isEditing) {
+                    setFormProfile({
+                      name: user.name,
+                      username: user.username,
+                      email: user.email,
+                      phone: user.phone ?? '',
+                      country_code: user.country_code ?? DEFAULT_COUNTRY.code,
+                      bio: user.bio ?? '',
+                      location: user.location ?? '',
+                    });
+                    const c = getCountryByCode(user.country_code ?? '');
+                    if (c) setSelectedCountry(c);
+                  }
+                  setIsEditing((prev) => !prev);
+                }}
                 className="self-start sm:self-auto"
               >
                 {isEditing ? 'Cancelar' : 'Editar Perfil'}
@@ -547,12 +571,45 @@ export default function UserProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Teléfono</Label>
-                        <Input
-                          id="phone"
-                          value={formProfile.phone}
-                          onChange={handleChangeProfileField}
-                          disabled={!isEditing || profileUpdating}
-                        />
+                        <div className="flex gap-2">
+                          <select
+                            className="flex h-9 w-[110px] rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            value={selectedCountry.code}
+                            onChange={(e) => {
+                              const c = getCountryByCode(e.target.value);
+                              if (c) {
+                                setSelectedCountry(c);
+                                setFormProfile(prev => ({ ...prev, country_code: c.code }));
+                              }
+                            }}
+                            disabled={!isEditing || profileUpdating}
+                          >
+                            {COUNTRIES.map(c => (
+                              <option key={c.code} value={c.code}>
+                                {c.name} ({c.callingCode})
+                              </option>
+                            ))}
+                          </select>
+                          <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                              {selectedCountry.callingCode}
+                            </span>
+                            <Input
+                              id="phone"
+                              type="tel"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              className="pl-14"
+                              placeholder="987654321"
+                              value={formProfile.phone}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setFormProfile(prev => ({ ...prev, phone: val }));
+                              }}
+                              disabled={!isEditing || profileUpdating}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -587,9 +644,14 @@ export default function UserProfilePage() {
                               username: user.username,
                               email: user.email,
                               phone: user.phone ?? '',
+                              country_code: user.country_code ?? DEFAULT_COUNTRY.code,
                               bio: user.bio ?? '',
                               location: user.location ?? '',
                             });
+                            if (user.country_code) {
+                              const c = getCountryByCode(user.country_code);
+                              if (c) setSelectedCountry(c);
+                            }
                             setIsEditing(false);
                           }}
                           disabled={profileUpdating}

@@ -16,6 +16,7 @@ export interface UpdateProfileRequest {
     username?: string;
     email?: string;
     phone?: string;
+    country_code?: string;
     bio?: string;
     location?: string;
 }
@@ -25,6 +26,7 @@ export interface UpdateProfileResponse {
     username?: string;
     email?: string;
     phone?: string;
+    country_code?: string;
     bio?: string;
     location?: string;
 }

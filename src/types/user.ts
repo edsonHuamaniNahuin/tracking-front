@@ -10,6 +10,7 @@ export interface User {
   public_profile: boolean;
   show_online_status: boolean;
   phone: string | null;
+  country_code: string | null;
   bio: string | null;
   location: string | null;
   two_factor_enabled: boolean;
