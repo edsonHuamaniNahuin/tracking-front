@@ -178,81 +178,55 @@ export default function VesselsChartsPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Selector de período */}
-                    <div className="flex items-center gap-1">
-                        <Select
-                            value={filterMode === "period" ? period : ""}
-                            onValueChange={(v) => {
-                                if (!v) return
-                                setPeriod(v)
-                                setFilterMode("period")
-                            }}
-                        >
-                            <SelectTrigger className={`w-full sm:w-[160px] ${filterMode === "period" ? "border-primary ring-1 ring-primary/20" : ""}`}>
-                                <SelectValue placeholder="Período" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="week">Última semana</SelectItem>
-                                <SelectItem value="month">Último mes</SelectItem>
-                                <SelectItem value="quarter">Último trimestre</SelectItem>
-                                <SelectItem value="year">Último año</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {filterMode === "period" && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0"
-                                onClick={() => { setFilterMode("period"); setPeriod("month") }}
-                                title="Limpiar filtro de período"
-                            >
-                                <span className="text-xs">✕</span>
-                            </Button>
-                        )}
-                    </div>
+                    <Select
+                        value={filterMode === "period" ? period : ""}
+                        onValueChange={(v) => {
+                            if (!v) return
+                            setPeriod(v)
+                            setFilterMode("period")
+                        }}
+                    >
+                        <SelectTrigger className={`w-full sm:w-[160px] ${filterMode === "period" ? "border-primary ring-1 ring-primary/20" : ""}`}>
+                            <SelectValue placeholder="Período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="week">Última semana</SelectItem>
+                            <SelectItem value="month">Último mes</SelectItem>
+                            <SelectItem value="quarter">Último trimestre</SelectItem>
+                            <SelectItem value="year">Último año</SelectItem>
+                        </SelectContent>
+                    </Select>
 
                     {/* Date picker */}
-                    <div className="flex items-center gap-1">
-                        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={`w-full sm:w-[200px] justify-start text-left font-normal ${filterMode === "date" ? "border-primary ring-1 ring-primary/20" : ""}`}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                                    {filterMode === "date"
-                                        ? format(date, "PPP", { locale: es })
-                                        : <span className="text-muted-foreground">Seleccionar fecha</span>
-                                    }
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <Calendar
-                                    mode="single"
-                                    selected={filterMode === "date" ? date : undefined}
-                                    onSelect={(d) => {
-                                        if (!d) return
-                                        setDate(d)
-                                        setFilterMode("date")
-                                        setDatePickerOpen(false)
-                                    }}
-                                    disabled={(d) => d > today}
-                                    locale={es}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        {filterMode === "date" && (
+                    <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                        <PopoverTrigger asChild>
                             <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0"
-                                onClick={() => { setFilterMode("period"); setDate(today) }}
-                                title="Limpiar filtro de fecha"
+                                variant="outline"
+                                className={`w-full sm:w-[200px] justify-start text-left font-normal ${filterMode === "date" ? "border-primary ring-1 ring-primary/20" : ""}`}
                             >
-                                <span className="text-xs">✕</span>
+                                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                {filterMode === "date"
+                                    ? format(date, "PPP", { locale: es })
+                                    : <span className="text-muted-foreground">Seleccionar fecha</span>
+                                }
                             </Button>
-                        )}
-                    </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                                mode="single"
+                                selected={filterMode === "date" ? date : undefined}
+                                onSelect={(d) => {
+                                    if (!d) return
+                                    setDate(d)
+                                    setFilterMode("date")
+                                    setDatePickerOpen(false)
+                                }}
+                                disabled={(d) => d > today}
+                                locale={es}
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
 
                     {/* Download */}
                     <Button variant="outline" size="icon" onClick={handleDownload} title="Descargar Excel">
