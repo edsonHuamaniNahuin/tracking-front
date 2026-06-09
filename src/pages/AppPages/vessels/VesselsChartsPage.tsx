@@ -23,6 +23,7 @@ import { FixedZoomMap } from "@/components/vessels/charts/fixed-zoom-map"
 import { RouteMap } from "@/components/vessels/charts/route-map"
 
 import { dashboardService } from "@/services/dashboard.service"
+import { routeService, type SavedRoute } from "@/services/route.service"
 import type { DashboardStatsData } from "@/types/models/dashboardStats"
 
 type FilterMode = "period" | "date"
@@ -43,6 +44,7 @@ export default function VesselsChartsPage() {
     const [dashboardData, setDashboardData] = useState<DashboardStatsData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [routes, setRoutes] = useState<SavedRoute[]>([])
 
     // Calcular rango de fechas según filtro activo
     const dateRange = useMemo(() => {
@@ -87,6 +89,12 @@ export default function VesselsChartsPage() {
     }, [dateRange])
 
     useEffect(() => { loadData() }, [loadData])
+
+    // Cargar rutas guardadas
+    const fetchRoutes = useCallback(async () => {
+        try { setRoutes(await routeService.list()) } catch {/* silencioso */}
+    }, [])
+    useEffect(() => { fetchRoutes() }, [fetchRoutes])
 
     // ── Excel download ────────────────────────────────────────────────
     const handleDownload = () => {
@@ -444,8 +452,23 @@ export default function VesselsChartsPage() {
                         data={dashboardData?.vessel_positions || []}
                         isLoading={isLoading}
                         height={600}
-                        onRouteCreate={(route) => console.log("Nueva ruta creada:", route)}
-                        onRouteDelete={(routeId) => console.log("Ruta eliminada:", routeId)}
+                        onRouteCreate={async (route) => {
+                            try {
+                                const saved = await routeService.create({
+                                    name: route.name,
+                                    points: route.points,
+                                    color: route.color,
+                                    vesselId: route.vesselId ?? null,
+                                })
+                                setRoutes(prev => [saved, ...prev])
+                            } catch { /* silencioso */ }
+                        }}
+                        onRouteDelete={async (routeId) => {
+                            try {
+                                await routeService.remove(Number(routeId))
+                                setRoutes(prev => prev.filter(r => r.id !== Number(routeId)))
+                            } catch { /* silencioso */ }
+                        }}
                     />
                 </TabsContent>
             </Tabs>
