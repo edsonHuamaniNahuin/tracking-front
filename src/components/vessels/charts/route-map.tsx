@@ -41,6 +41,12 @@ export function RouteMap({
     const [currentRoute, setCurrentRoute] = useState<RoutePoint[]>([])
     const [routes, setRoutes] = useState<VesselRoute[]>([])
 
+    // Refs para que el handler de click del mapa siempre lea los valores actualizados
+    const isCreatingRouteRef = useRef(isCreatingRoute)
+    const currentRouteRef = useRef(currentRoute)
+    useEffect(() => { isCreatingRouteRef.current = isCreatingRoute }, [isCreatingRoute])
+    useEffect(() => { currentRouteRef.current = currentRoute }, [currentRoute])
+
     const mapRef = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<L.Map | null>(null)
     const routeLinesRef = useRef<L.Polyline[]>([])
@@ -112,21 +118,23 @@ export function RouteMap({
                     }
                 })
 
-                // Evento de clic para crear rutas
+                // Evento de clic para crear rutas (usa refs para lectura actualizada)
                 map.on('click', (e: L.LeafletMouseEvent) => {
-                    if (isCreatingRoute) {
+                    if (isCreatingRouteRef.current) {
                         const newPoint = { lat: e.latlng.lat, lng: e.latlng.lng }
+                        const prevPoints = currentRouteRef.current
                         setCurrentRoute(prev => [...prev, newPoint])
 
                         // Agregar marcador temporal
-                        const marker = L.marker([e.latlng.lat, e.latlng.lng])
+                        L.marker([e.latlng.lat, e.latlng.lng])
                             .addTo(map)
-                            .bindPopup(`Punto ${currentRoute.length + 1}`)
+                            .bindPopup(`Punto ${prevPoints.length + 1}`)
 
                         // Dibujar línea si hay más de un punto
-                        if (currentRoute.length > 0) {
-                            const line = L.polyline([
-                                [currentRoute[currentRoute.length - 1].lat, currentRoute[currentRoute.length - 1].lng],
+                        if (prevPoints.length > 0) {
+                            const last = prevPoints[prevPoints.length - 1]
+                            L.polyline([
+                                [last.lat, last.lng],
                                 [e.latlng.lat, e.latlng.lng]
                             ], { color: '#ef4444', weight: 3 }).addTo(map)
                         }
@@ -149,7 +157,7 @@ export function RouteMap({
                 mapInstanceRef.current = null
             }
         }
-    }, [isClient, data, isCreatingRoute, currentRoute])
+    }, [isClient, data])
 
     // Funciones de control
     const startCreatingRoute = () => {
@@ -180,12 +188,6 @@ export function RouteMap({
     const cancelRoute = () => {
         setIsCreatingRoute(false)
         setCurrentRoute([])
-
-        // Limpiar marcadores temporales si el mapa está disponible
-        if (mapInstanceRef.current) {
-            // Simplemente recrear el mapa para limpiar elementos temporales
-            window.location.reload()
-        }
     }
 
     const deleteRoute = (routeId: string) => {
