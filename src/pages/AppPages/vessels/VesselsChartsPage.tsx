@@ -452,6 +452,13 @@ export default function VesselsChartsPage() {
                         data={dashboardData?.vessel_positions || []}
                         isLoading={isLoading}
                         height={600}
+                        savedRoutes={routes.map(r => ({
+                            id: String(r.id),
+                            name: r.name,
+                            points: r.points,
+                            color: r.color,
+                            vesselId: r.vessel_id ? String(r.vessel_id) : undefined,
+                        }))}
                         onRouteCreate={async (route) => {
                             try {
                                 const saved = await routeService.create({

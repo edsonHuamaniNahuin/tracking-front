@@ -24,6 +24,7 @@ interface RouteMapProps {
     data: VesselPosition[]
     height?: number
     isLoading?: boolean
+    savedRoutes?: VesselRoute[]
     onRouteCreate?: (route: VesselRoute) => void
     onRouteDelete?: (routeId: string) => void
 }
@@ -32,6 +33,7 @@ export function RouteMap({
     data,
     height = 400,
     isLoading = false,
+    savedRoutes = [],
     onRouteCreate,
     onRouteDelete
 }: RouteMapProps) {
@@ -39,13 +41,32 @@ export function RouteMap({
     const [mapInitialized, setMapInitialized] = useState(false)
     const [isCreatingRoute, setIsCreatingRoute] = useState(false)
     const [currentRoute, setCurrentRoute] = useState<RoutePoint[]>([])
-    const [routes, setRoutes] = useState<VesselRoute[]>([])
+    const [routes, setRoutes] = useState<VesselRoute[]>(() =>
+        savedRoutes.map(r => ({
+            id: String(r.id),
+            name: r.name,
+            points: r.points,
+            color: r.color || '#ef4444',
+            vesselId: r.vesselId,
+        }))
+    )
 
     // Refs para que el handler de click del mapa siempre lea los valores actualizados
     const isCreatingRouteRef = useRef(isCreatingRoute)
     const currentRouteRef = useRef(currentRoute)
     useEffect(() => { isCreatingRouteRef.current = isCreatingRoute }, [isCreatingRoute])
     useEffect(() => { currentRouteRef.current = currentRoute }, [currentRoute])
+
+    // Sincronizar rutas guardadas desde el padre
+    useEffect(() => {
+        setRoutes(savedRoutes.map(r => ({
+            id: String(r.id),
+            name: r.name,
+            points: r.points,
+            color: r.color || '#ef4444',
+            vesselId: r.vesselId,
+        })))
+    }, [savedRoutes])
 
     const mapRef = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<L.Map | null>(null)

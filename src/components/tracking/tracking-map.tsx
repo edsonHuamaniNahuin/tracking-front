@@ -263,12 +263,19 @@ export function TrackingMap({
             setIsReady(true)
             setMapStatus("Mapa listo — selecciona una unidad")
 
-            setTimeout(() => map.invalidateSize(), 100)
-            setTimeout(() => map.invalidateSize(), 400)
-            setTimeout(() => map.invalidateSize(), 800)
+            const safeInvalidate = () => {
+                try {
+                    if (mapRef.current && mapRef.current.offsetWidth > 0) {
+                        map.invalidateSize()
+                    }
+                } catch { /* leaflet no inicializado */ }
+            }
+            setTimeout(safeInvalidate, 100)
+            setTimeout(safeInvalidate, 400)
+            setTimeout(safeInvalidate, 800)
 
             if (mapRef.current) {
-                const ro = new ResizeObserver(() => map.invalidateSize())
+                const ro = new ResizeObserver(() => safeInvalidate())
                 ro.observe(mapRef.current)
                 resizeObserverRef.current = ro
             }
