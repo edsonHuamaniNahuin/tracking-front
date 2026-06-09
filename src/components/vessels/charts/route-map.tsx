@@ -3,6 +3,16 @@
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Route, MapPin, Navigation, Trash2, Plus } from "lucide-react"
 import type { VesselPosition } from "@/types/models/dashboardStats"
 
@@ -42,6 +52,7 @@ export function RouteMap({
     const [isCreatingRoute, setIsCreatingRoute] = useState(false)
     const [currentRoute, setCurrentRoute] = useState<RoutePoint[]>([])
     const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+    const [routeToDelete, setRouteToDelete] = useState<VesselRoute | null>(null)
     const [routes, setRoutes] = useState<VesselRoute[]>(() =>
         savedRoutes.map(r => ({
             id: String(r.id),
@@ -262,10 +273,8 @@ export function RouteMap({
 
     const deleteRoute = (routeId: string) => {
         setRoutes(prev => prev.filter(r => r.id !== routeId))
-
-        if (onRouteDelete) {
-            onRouteDelete(routeId)
-        }
+        if (selectedRouteId === routeId) setSelectedRouteId(null)
+        if (onRouteDelete) onRouteDelete(routeId)
     }
 
     if (isLoading) {
@@ -287,6 +296,7 @@ export function RouteMap({
     }
 
     return (
+        <>
         <div className="space-y-4">
             {/* Controles de rutas */}
             <Card>
@@ -360,7 +370,7 @@ export function RouteMap({
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={(e) => { e.stopPropagation(); deleteRoute(route.id) }}
+                                        onClick={(e) => { e.stopPropagation(); setRouteToDelete(route) }}
                                         className="h-6 w-6 p-0 shrink-0"
                                     >
                                         <Trash2 className="h-3 w-3" />
@@ -383,5 +393,31 @@ export function RouteMap({
                 </div>
             </div>
         </div>
+
+        {/* Confirmación de eliminación */}
+        <AlertDialog open={!!routeToDelete} onOpenChange={(open) => { if (!open) setRouteToDelete(null) }}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar ruta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Se eliminará permanentemente la ruta <strong>{routeToDelete?.name}</strong>.
+                        Esta acción no se puede deshacer.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => {
+                            if (routeToDelete) deleteRoute(routeToDelete.id)
+                            setRouteToDelete(null)
+                        }}
+                    >
+                        Eliminar
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     )
 }
