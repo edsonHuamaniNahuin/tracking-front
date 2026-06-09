@@ -358,12 +358,12 @@ export function RouteMap({
             </Card>
 
             {/* Contenedor del mapa */}
-            <div style={{ height }} className="relative rounded-lg overflow-hidden border">
+            <div style={{ height }} className="relative rounded-lg border">
                 <div ref={mapRef} className="w-full h-full" />
 
                 {/* Lista de rutas */}
                 {routes.length > 0 && (
-                    <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-10 max-w-xs">
+                    <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-20 max-w-xs">
                         <div className="text-sm font-medium mb-2">Rutas Creadas</div>
                         <div className="space-y-1">
                             {routes.map((route) => (
