@@ -117,6 +117,12 @@ export default function DeviceLogsPage() {
         const token = localStorage.getItem('access_token')
         if (!token) return
 
+        const appKey = import.meta.env.VITE_REVERB_APP_KEY
+        if (!appKey) {
+            console.warn('[DeviceLogsPage] VITE_REVERB_APP_KEY no configurada — WebSocket deshabilitado')
+            return
+        }
+
         let cancelled = false
 
         Promise.all([
@@ -128,7 +134,7 @@ export default function DeviceLogsPage() {
 
             const echo = new echoMod.default({
                 broadcaster: 'reverb',
-                key:      import.meta.env.VITE_REVERB_APP_KEY,
+                key:      appKey,
                 wsHost:   import.meta.env.VITE_REVERB_HOST   ?? 'localhost',
                 wsPort:   Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
                 wssPort:  Number(import.meta.env.VITE_REVERB_PORT ?? 443),
