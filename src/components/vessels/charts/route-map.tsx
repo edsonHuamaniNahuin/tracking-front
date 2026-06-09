@@ -409,7 +409,7 @@ export function RouteMap({
 
         {/* Confirmación de eliminación */}
         <AlertDialog open={!!routeToDelete} onOpenChange={(open) => { if (!open) setRouteToDelete(null) }}>
-            <AlertDialogContent>
+            <AlertDialogContent className="z-[1100] max-w-[90vw] sm:max-w-md">
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Eliminar ruta?</AlertDialogTitle>
                     <AlertDialogDescription>
