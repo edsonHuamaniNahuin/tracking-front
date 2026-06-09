@@ -41,6 +41,7 @@ export function RouteMap({
     const [mapInitialized, setMapInitialized] = useState(false)
     const [isCreatingRoute, setIsCreatingRoute] = useState(false)
     const [currentRoute, setCurrentRoute] = useState<RoutePoint[]>([])
+    const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
     const [routes, setRoutes] = useState<VesselRoute[]>(() =>
         savedRoutes.map(r => ({
             id: String(r.id),
@@ -71,6 +72,62 @@ export function RouteMap({
     const mapRef = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<L.Map | null>(null)
     const routeLinesRef = useRef<L.Polyline[]>([])
+
+    // Función para centrar el mapa en una ruta
+    const focusOnRoute = (route: VesselRoute) => {
+        if (!mapInstanceRef.current || route.points.length < 2) return
+        const L = (window as any).L
+        if (!L) return
+        const latlngs = route.points.map(p => [p.lat, p.lng] as [number, number])
+        const bounds = L.latLngBounds(latlngs)
+        mapInstanceRef.current.flyToBounds(bounds, { padding: [50, 50], maxZoom: 14 })
+        setSelectedRouteId(route.id)
+    }
+
+    // Dibujar/redibujar rutas en el mapa
+    useEffect(() => {
+        if (!mapInstanceRef.current || !mapInitialized) return
+        const L = (window as any).L
+        if (!L) return
+
+        // Limpiar líneas anteriores
+        routeLinesRef.current.forEach(line => {
+            if (mapInstanceRef.current) mapInstanceRef.current.removeLayer(line)
+        })
+        routeLinesRef.current = []
+
+        routes.forEach(route => {
+            if (route.points.length < 2) return
+            const isSelected = route.id === selectedRouteId
+            const latlngs = route.points.map(p => [p.lat, p.lng] as [number, number])
+            const line = L.polyline(latlngs, {
+                color: route.color || '#ef4444',
+                weight: isSelected ? 5 : 3,
+                opacity: isSelected ? 1 : 0.7,
+                dashArray: isSelected ? '' : undefined,
+            }).addTo(mapInstanceRef.current!)
+
+            // Marcadores de inicio y fin
+            if (route.points.length >= 2) {
+                const first = route.points[0]
+                const last = route.points[route.points.length - 1]
+                L.circleMarker([first.lat, first.lng], {
+                    radius: 5,
+                    color: '#22c55e',
+                    fillColor: '#22c55e',
+                    fillOpacity: 1,
+                }).addTo(mapInstanceRef.current!).bindPopup(`Inicio: ${route.name}`)
+                L.circleMarker([last.lat, last.lng], {
+                    radius: 5,
+                    color: '#ef4444',
+                    fillColor: '#ef4444',
+                    fillOpacity: 1,
+                }).addTo(mapInstanceRef.current!).bindPopup(`Fin: ${route.name}`)
+            }
+
+            routeLinesRef.current.push(line)
+        })
+    }, [routes, selectedRouteId, mapInitialized])
 
     useEffect(() => {
         setIsClient(true)
@@ -290,20 +347,31 @@ export function RouteMap({
                 {routes.length > 0 && (
                     <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-[1000] max-w-xs">
                         <div className="text-sm font-medium mb-2">Rutas Creadas</div>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                             {routes.map((route) => (
-                                <div key={route.id} className="flex items-center justify-between">
-                                    <div>
-                                        <div className="text-xs font-medium">{route.name}</div>
-                                        <div className="text-xs text-muted-foreground">
+                                <div
+                                    key={route.id}
+                                    onClick={() => focusOnRoute(route)}
+                                    className={`flex items-center justify-between rounded px-2 py-1 cursor-pointer transition-colors ${
+                                        selectedRouteId === route.id
+                                            ? 'bg-primary/10 border border-primary/30'
+                                            : 'hover:bg-muted'
+                                    }`}
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: route.color }} />
+                                            <span className="text-xs font-medium truncate">{route.name}</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground ml-4">
                                             {route.points.length} puntos
                                         </div>
                                     </div>
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => deleteRoute(route.id)}
-                                        className="h-6 w-6 p-0"
+                                        onClick={(e) => { e.stopPropagation(); deleteRoute(route.id) }}
+                                        className="h-6 w-6 p-0 shrink-0"
                                     >
                                         <Trash2 className="h-3 w-3" />
                                     </Button>
