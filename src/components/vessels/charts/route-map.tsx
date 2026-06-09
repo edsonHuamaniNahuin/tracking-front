@@ -315,7 +315,7 @@ export function RouteMap({
 
     return (
         <>
-        <div className="space-y-4 relative">
+        <div className="space-y-4">
             {/* Controles de rutas */}
             <Card>
                 <CardHeader>
@@ -360,54 +360,54 @@ export function RouteMap({
             {/* Contenedor del mapa */}
             <div style={{ height }} className="relative rounded-lg border">
                 <div ref={mapRef} className="w-full h-full" />
-            </div>
 
-            {/* Overlays fuera del mapa — no dentro de su stacking context */}
-            {routes.length > 0 && (
-                <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-20 max-w-xs">
-                    <div className="text-sm font-medium mb-2">Rutas Creadas</div>
-                    <div className="space-y-1">
-                        {routes.map((route) => (
-                            <div
-                                key={route.id}
-                                onClick={() => focusOnRoute(route)}
-                                className={`flex items-center justify-between rounded px-2 py-1 cursor-pointer transition-colors ${
-                                    selectedRouteId === route.id
-                                        ? 'bg-primary/10 border border-primary/30'
-                                        : 'hover:bg-muted'
-                                }`}
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: route.color }} />
-                                        <span className="text-xs font-medium truncate">{route.name}</span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground ml-4">
-                                        {route.points.length} puntos
-                                    </div>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => { e.stopPropagation(); setRouteToDelete(route) }}
-                                    className="h-6 w-6 p-0 shrink-0"
+                {/* Lista de rutas */}
+                {routes.length > 0 && (
+                    <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-[800] max-w-[280px] w-[calc(100%-2rem)]">
+                        <div className="text-sm font-medium mb-2">Rutas Creadas</div>
+                        <div className="space-y-1">
+                            {routes.map((route) => (
+                                <div
+                                    key={route.id}
+                                    onClick={() => focusOnRoute(route)}
+                                    className={`flex items-center justify-between rounded px-2 py-1 cursor-pointer transition-colors ${
+                                        selectedRouteId === route.id
+                                            ? 'bg-primary/10 border border-primary/30'
+                                            : 'hover:bg-muted'
+                                    }`}
                                 >
-                                    <Trash2 className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        ))}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: route.color }} />
+                                            <span className="text-xs font-medium truncate">{route.name}</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground ml-4">
+                                            {route.points.length} puntos
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => { e.stopPropagation(); setRouteToDelete(route) }}
+                                        className="h-6 w-6 p-0 shrink-0"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Info del mapa flotante */}
-            <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-2 rounded-lg shadow-lg border z-20 pointer-events-none">
-                <div className="text-xs font-medium">
-                    <Navigation className="h-3 w-3 inline mr-1" />
-                    Planificador de Rutas
-                </div>
-                <div className="text-xs text-muted-foreground">
-                    Haz clic para crear puntos de ruta
+                {/* Información del mapa */}
+                <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-2 rounded-lg shadow-lg border z-[800] pointer-events-none">
+                    <div className="text-xs font-medium">
+                        <Navigation className="h-3 w-3 inline mr-1" />
+                        Planificador de Rutas
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        Haz clic para crear puntos de ruta
+                    </div>
                 </div>
             </div>
         </div>
