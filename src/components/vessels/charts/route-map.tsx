@@ -87,6 +87,11 @@ export function RouteMap({
 
     // Función para centrar el mapa en una ruta
     const focusOnRoute = (route: VesselRoute) => {
+        if (selectedRouteId === route.id) {
+            // Toggle: deseleccionar
+            setSelectedRouteId(null)
+            return
+        }
         if (!mapInstanceRef.current || route.points.length < 2) return
         const L = (window as any).L
         if (!L) return
@@ -358,7 +363,7 @@ export function RouteMap({
 
                 {/* Lista de rutas */}
                 {routes.length > 0 && (
-                    <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-[1000] max-w-xs">
+                    <div className="absolute top-4 right-4 bg-background/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border z-10 max-w-xs">
                         <div className="text-sm font-medium mb-2">Rutas Creadas</div>
                         <div className="space-y-1">
                             {routes.map((route) => (
@@ -395,7 +400,7 @@ export function RouteMap({
                 )}
 
                 {/* Información del mapa */}
-                <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-2 rounded-lg shadow-lg border z-[1000]">
+                <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-2 rounded-lg shadow-lg border z-10">
                     <div className="text-xs font-medium">
                         <Navigation className="h-3 w-3 inline mr-1" />
                         Planificador de Rutas
@@ -409,7 +414,7 @@ export function RouteMap({
 
         {/* Confirmación de eliminación */}
         <AlertDialog open={!!routeToDelete} onOpenChange={(open) => { if (!open) setRouteToDelete(null) }}>
-            <AlertDialogContent className="z-[1100] max-w-[90vw] sm:max-w-md">
+            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Eliminar ruta?</AlertDialogTitle>
                     <AlertDialogDescription>
