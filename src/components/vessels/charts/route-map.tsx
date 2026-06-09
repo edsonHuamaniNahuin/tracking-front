@@ -96,15 +96,17 @@ export function RouteMap({
                     if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
                         const vesselIcon = L.divIcon({
                             html: `
-                                <div class="vessel-marker" style="background-color: #3b82f6;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                                        <path d="M3 12H7L9 9H11L13 12H17L19 9H21L22 12H21L19 15H17L13 12H11L9 15H7L3 12Z"/>
+                                <div class="vessel-marker" style="background-color: #3b82f6; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,.3);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+                                        <path d="M19.5 21c.6-.5 1.2-1 2.5-1 2.5 0 2.5 2 5 2 1.3 0 1.9-.5 2.5-1"/>
+                                        <path d="M2 21V8c0-1.1.9-2 2-2h4l2-3h4l2 3h4c1.1 0 2 .9 2 2v13"/>
                                     </svg>
                                 </div>
                             `,
                             className: 'custom-vessel-marker',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
+                            iconSize: [28, 28],
+                            iconAnchor: [14, 14]
                         })
 
                         L.marker([lat, lng], { icon: vesselIcon })

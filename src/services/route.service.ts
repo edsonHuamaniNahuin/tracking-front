@@ -13,8 +13,8 @@ export interface SavedRoute {
 
 export const routeService = {
     async list(): Promise<SavedRoute[]> {
-        const resp = await api.get<SavedRoute[]>('/routes')
-        return resp.data
+        const resp = await api.get<{ data: SavedRoute[] }>('/routes')
+        return resp.data.data
     },
 
     async create(data: {
@@ -23,8 +23,8 @@ export const routeService = {
         color: string
         vesselId?: string | null
     }): Promise<SavedRoute> {
-        const resp = await api.post<SavedRoute>('/routes', data)
-        return resp.data
+        const resp = await api.post<{ data: SavedRoute }>('/routes', data)
+        return resp.data.data
     },
 
     async remove(id: number): Promise<void> {
