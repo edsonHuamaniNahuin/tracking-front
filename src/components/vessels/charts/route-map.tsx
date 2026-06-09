@@ -83,6 +83,7 @@ export function RouteMap({
     const mapRef = useRef<HTMLDivElement>(null)
     const mapInstanceRef = useRef<L.Map | null>(null)
     const routeLinesRef = useRef<L.Polyline[]>([])
+    const tempLayersRef = useRef<L.Layer[]>([])
 
     // Función para centrar el mapa en una ruta
     const focusOnRoute = (route: VesselRoute) => {
@@ -148,7 +149,8 @@ export function RouteMap({
             try {
                 const L = (await import("leaflet")).default
 
-                // Configurar iconos por defecto de Leaflet
+                // Configurar iconos por defecto de Leaflet — forzar URL absoluta
+                delete (L.Icon.Default.prototype as any)._getIconUrl
                 L.Icon.Default.mergeOptions({
                     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
                     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -207,17 +209,19 @@ export function RouteMap({
                         setCurrentRoute(prev => [...prev, newPoint])
 
                         // Agregar marcador temporal
-                        L.marker([e.latlng.lat, e.latlng.lng])
+                        const marker = L.marker([e.latlng.lat, e.latlng.lng])
                             .addTo(map)
                             .bindPopup(`Punto ${prevPoints.length + 1}`)
+                        tempLayersRef.current.push(marker)
 
                         // Dibujar línea si hay más de un punto
                         if (prevPoints.length > 0) {
                             const last = prevPoints[prevPoints.length - 1]
-                            L.polyline([
+                            const line = L.polyline([
                                 [last.lat, last.lng],
                                 [e.latlng.lat, e.latlng.lng]
                             ], { color: '#ef4444', weight: 3 }).addTo(map)
+                            tempLayersRef.current.push(line)
                         }
                     }
                 })
@@ -241,7 +245,14 @@ export function RouteMap({
     }, [isClient, data])
 
     // Funciones de control
+    const clearTempLayers = () => {
+        if (!mapInstanceRef.current) return
+        tempLayersRef.current.forEach(layer => mapInstanceRef.current!.removeLayer(layer))
+        tempLayersRef.current = []
+    }
+
     const startCreatingRoute = () => {
+        clearTempLayers()
         setIsCreatingRoute(true)
         setCurrentRoute([])
     }
@@ -264,11 +275,13 @@ export function RouteMap({
 
         setIsCreatingRoute(false)
         setCurrentRoute([])
+        clearTempLayers()
     }
 
     const cancelRoute = () => {
         setIsCreatingRoute(false)
         setCurrentRoute([])
+        clearTempLayers()
     }
 
     const deleteRoute = (routeId: string) => {
