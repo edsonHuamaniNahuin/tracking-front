@@ -84,49 +84,39 @@ export function RouteMap({
         setSelectedRouteId(route.id)
     }
 
-    // Dibujar/redibujar rutas en el mapa
+    // Dibujar/redibujar la ruta seleccionada en el mapa
     useEffect(() => {
         if (!mapInstanceRef.current || !mapInitialized) return
         const L = (window as any).L
         if (!L) return
 
-        // Limpiar líneas anteriores
-        routeLinesRef.current.forEach(line => {
-            if (mapInstanceRef.current) mapInstanceRef.current.removeLayer(line)
+        // Limpiar líneas y marcadores anteriores
+        routeLinesRef.current.forEach(layer => {
+            if (mapInstanceRef.current) mapInstanceRef.current.removeLayer(layer)
         })
         routeLinesRef.current = []
 
-        routes.forEach(route => {
-            if (route.points.length < 2) return
-            const isSelected = route.id === selectedRouteId
-            const latlngs = route.points.map(p => [p.lat, p.lng] as [number, number])
-            const line = L.polyline(latlngs, {
-                color: route.color || '#ef4444',
-                weight: isSelected ? 5 : 3,
-                opacity: isSelected ? 1 : 0.7,
-                dashArray: isSelected ? '' : undefined,
-            }).addTo(mapInstanceRef.current!)
+        const selected = routes.find(r => r.id === selectedRouteId)
+        if (!selected || selected.points.length < 2) return
 
-            // Marcadores de inicio y fin
-            if (route.points.length >= 2) {
-                const first = route.points[0]
-                const last = route.points[route.points.length - 1]
-                L.circleMarker([first.lat, first.lng], {
-                    radius: 5,
-                    color: '#22c55e',
-                    fillColor: '#22c55e',
-                    fillOpacity: 1,
-                }).addTo(mapInstanceRef.current!).bindPopup(`Inicio: ${route.name}`)
-                L.circleMarker([last.lat, last.lng], {
-                    radius: 5,
-                    color: '#ef4444',
-                    fillColor: '#ef4444',
-                    fillOpacity: 1,
-                }).addTo(mapInstanceRef.current!).bindPopup(`Fin: ${route.name}`)
-            }
+        const latlngs = selected.points.map(p => [p.lat, p.lng] as [number, number])
+        const line = L.polyline(latlngs, {
+            color: selected.color || '#ef4444',
+            weight: 4,
+            opacity: 1,
+        }).addTo(mapInstanceRef.current!)
+        routeLinesRef.current.push(line)
 
-            routeLinesRef.current.push(line)
-        })
+        // Marcadores de inicio y fin
+        const first = selected.points[0]
+        const last = selected.points[selected.points.length - 1]
+        const startMarker = L.circleMarker([first.lat, first.lng], {
+            radius: 6, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1,
+        }).addTo(mapInstanceRef.current!).bindPopup(`Inicio: ${selected.name}`)
+        const endMarker = L.circleMarker([last.lat, last.lng], {
+            radius: 6, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1,
+        }).addTo(mapInstanceRef.current!).bindPopup(`Fin: ${selected.name}`)
+        routeLinesRef.current.push(startMarker, endMarker)
     }, [routes, selectedRouteId, mapInitialized])
 
     useEffect(() => {
