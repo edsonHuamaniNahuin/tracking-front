@@ -289,7 +289,7 @@ export default function TrackingMapPage() {
 
                     {/* Indicador LIVE flotante */}
                     {isLive && (
-                        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-1 rounded-full shadow ${wsConnected ? 'bg-emerald-600' : 'bg-amber-500'}`}>
+                        <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-1 rounded-full shadow ${wsConnected ? 'bg-emerald-600' : 'bg-amber-500'}`}>
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
@@ -299,7 +299,7 @@ export default function TrackingMapPage() {
                     )}
 
                     {/* Barra superior flotante */}
-                    <div className="absolute top-3 right-3 flex items-center gap-2 z-[1001]">
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                         <Button
                             variant="secondary"
                             size="icon"
@@ -322,7 +322,7 @@ export default function TrackingMapPage() {
 
                     {/* Info embarcación flotante */}
                     {selectedVesselData && (
-                        <div className="absolute top-3 left-14 bg-background/95 backdrop-blur-sm rounded-lg shadow px-3 py-1.5 z-[1001] flex items-center gap-2 text-xs">
+                        <div className="absolute top-3 left-14 bg-background/95 backdrop-blur-sm rounded-lg shadow px-3 py-1.5 z-10 flex items-center gap-2 text-xs">
                             <Ship className="h-3.5 w-3.5 text-blue-600" />
                             <span className="font-semibold">{selectedVesselData.name}</span>
                             <span className="text-muted-foreground">{trackings.length} pts</span>
@@ -635,7 +635,7 @@ export default function TrackingMapPage() {
                             <Button
                                 variant="secondary"
                                 size="icon"
-                                className="absolute top-2 right-2 z-[1001] h-7 w-7 shadow"
+                                className="absolute top-2 right-2 z-10 h-7 w-7 shadow"
                                 onClick={() => setIsFullscreen(true)}
                                 title="Pantalla completa"
                             >
